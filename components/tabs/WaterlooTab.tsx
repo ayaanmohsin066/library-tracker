@@ -23,14 +23,16 @@ export default function WaterlooTab() {
     return <ErrorBanner onRetry={refetch} />;
   }
 
-  const libraries = (data?.live ?? []).map((loc) => ({
+  const raw = Array.isArray(data?.live) ? data.live : [];
+  const libraries = raw.map((loc) => ({
     name: loc.name,
     percentage: loc.percentage,
     people: loc.people,
     capacity: loc.capacity,
     isOpen: loc.isOpen,
     hourSummary: loc.hourSummary,
-    subLocs: loc.subLocs ?? [],
+    subLocs: Array.isArray(loc.subLocs) ? loc.subLocs : [],
+    hasFloorStack: loc.name === "Dana Porter Library",
   }));
 
   return (
