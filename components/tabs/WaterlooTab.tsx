@@ -23,7 +23,7 @@ export default function WaterlooTab() {
     return <ErrorBanner onRetry={refetch} />;
   }
 
-  const FLOOR_STACK_LIBS = new Set(["Dana Porter Library", "Davis Library"]);
+  const FLOOR_STACK_LIBS = new Set(["Dana Porter Library"]);
 
   const libraries = (data?.live ?? []).map((loc) => ({
     name: loc.name,
