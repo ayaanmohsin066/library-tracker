@@ -37,15 +37,20 @@ export default function WaterlooTab() {
     <div className="space-y-5">
       {isStale && <StaleBanner onRetry={refetch} />}
 
+      {/* Meta bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           {dataUpdatedAt ?? "Updating…"} · auto-refreshes every 5 min
         </p>
         <a
           href="https://libcal.uwaterloo.ca"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex min-h-[44px] items-center gap-1.5 self-start rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-700 active:bg-teal-800 sm:self-auto"
+          className="inline-flex min-h-[44px] items-center gap-1.5 self-start rounded-xl px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 active:scale-95 sm:self-auto"
+          style={{
+            backgroundColor: "var(--accent)",
+            boxShadow: "0 0 14px var(--accent-glow)",
+          }}
         >
           Book a Study Room
           <span aria-hidden="true">→</span>

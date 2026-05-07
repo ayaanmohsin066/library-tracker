@@ -23,27 +23,32 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link
           rel="icon"
           href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>"
         />
+        {/* Prevent flash of wrong theme on load */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('lc-theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}`,
+          }}
+        />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{ backgroundColor: "#f8f9fa" }}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>{children}</Providers>
-        <footer className="border-t border-gray-200 bg-white px-4 py-6 text-center text-xs text-gray-400">
-          <p>
-            Data for Waterloo and Regina via Waitz.io · UofT data is historical
-            only
-          </p>
+        <footer
+          className="px-4 py-8 text-center text-xs"
+          style={{
+            borderTop: "1px solid var(--border)",
+            backgroundColor: "var(--bg-surface)",
+            color: "var(--text-muted)",
+          }}
+        >
+          <p>Data for Waterloo and Regina via Waitz.io · UofT data is historical only</p>
           <p className="mt-1">© 2025 LibraryCheck</p>
         </footer>
         <Analytics />

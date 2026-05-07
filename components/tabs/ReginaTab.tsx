@@ -37,7 +37,7 @@ export default function ReginaTab() {
     <div className="space-y-5">
       {isStale && <StaleBanner onRetry={refetch} />}
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
         {dataUpdatedAt ?? "Updating…"} · auto-refreshes every 5 min
       </p>
 
@@ -49,7 +49,7 @@ export default function ReginaTab() {
         ))}
       </div>
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
         Room booking available through the University of Regina library website
       </p>
     </div>
