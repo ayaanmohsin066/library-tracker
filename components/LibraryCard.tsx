@@ -42,16 +42,24 @@ const BAR_CLASS: Record<Level, string> = {
   high:   "bar-fill-red",
 };
 
+// Slab backgrounds: normal (18%) and hover/selected (35%)
 const FLOOR_BG: Record<Level, string> = {
-  low:    "rgba(16,185,129,0.12)",
-  medium: "rgba(245,158,11,0.12)",
-  high:   "rgba(239,68,68,0.12)",
+  low:    "rgba(16,185,129,0.18)",
+  medium: "rgba(245,158,11,0.18)",
+  high:   "rgba(239,68,68,0.18)",
 };
 
-const FLOOR_DEPTH: Record<Level, string> = {
+const FLOOR_BG_ACTIVE: Record<Level, string> = {
   low:    "rgba(16,185,129,0.35)",
   medium: "rgba(245,158,11,0.35)",
   high:   "rgba(239,68,68,0.35)",
+};
+
+// Bottom edge "thickness" — darker shade of same color
+const FLOOR_DEPTH: Record<Level, string> = {
+  low:    "rgba(16,185,129,0.55)",
+  medium: "rgba(245,158,11,0.55)",
+  high:   "rgba(239,68,68,0.55)",
 };
 
 const FLOOR_TEXT: Record<Level, string> = {
@@ -97,119 +105,6 @@ function SubLocRow({ loc }: { loc: SubLocation }) {
   );
 }
 
-interface FloorPanelProps {
-  floor: SubLocation;
-  isExpanded: boolean;
-  isHovered: boolean;
-  onToggle: () => void;
-  onHover: (hovered: boolean) => void;
-}
-
-function FloorPanel({ floor, isExpanded, isHovered, onToggle, onHover }: FloorPanelProps) {
-  const lv = level(floor.percentage);
-  return (
-    <div>
-      <div
-        role="button"
-        tabIndex={0}
-        aria-expanded={isExpanded}
-        onClick={onToggle}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onToggle();
-          }
-        }}
-        onMouseEnter={() => onHover(true)}
-        onMouseLeave={() => onHover(false)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "10px 14px",
-          borderRadius: "10px",
-          backgroundColor: FLOOR_BG[lv],
-          boxShadow: `0 4px 0 ${FLOOR_DEPTH[lv]}, inset 0 1px 0 rgba(255,255,255,0.04)`,
-          border: `1px solid ${FLOOR_DEPTH[lv]}`,
-          cursor: "pointer",
-          transform: isHovered ? "translateY(-4px)" : "translateY(0)",
-          transition: "transform 200ms ease, box-shadow 200ms ease",
-          outline: "none",
-          userSelect: "none",
-        }}
-      >
-        <span
-          style={{
-            fontSize: "13px",
-            fontWeight: 500,
-            color: "var(--text-primary)",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {floor.name}
-        </span>
-        <span
-          style={{
-            fontSize: "13px",
-            fontWeight: 700,
-            fontVariantNumeric: "tabular-nums",
-            color: FLOOR_TEXT[lv],
-            marginLeft: "12px",
-            flexShrink: 0,
-          }}
-        >
-          {Math.round(floor.percentage * 100)}%
-        </span>
-      </div>
-
-      {/* Accordion detail */}
-      <div
-        style={{
-          overflow: "hidden",
-          maxHeight: isExpanded ? "160px" : "0px",
-          opacity: isExpanded ? 1 : 0,
-          transition: "max-height 300ms ease, opacity 200ms ease",
-        }}
-      >
-        <div
-          style={{
-            padding: "10px 14px 12px",
-            borderRadius: "0 0 10px 10px",
-            backgroundColor: "var(--bg-elevated)",
-            border: "1px solid var(--border)",
-            borderTop: "none",
-            marginTop: "-2px",
-          }}
-        >
-          <p
-            style={{
-              fontSize: "12px",
-              fontWeight: 600,
-              color: "var(--text-primary)",
-              marginBottom: "6px",
-            }}
-          >
-            {floor.name}
-          </p>
-          <GlowBar pct={floor.percentage} />
-          <p
-            style={{
-              fontSize: "11px",
-              color: "var(--text-muted)",
-              marginTop: "4px",
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {floor.people} / {floor.capacity} people
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function LibraryCard({
   name,
   percentage,
@@ -222,12 +117,18 @@ export default function LibraryCard({
   hasFloorStack,
 }: LibraryCardProps) {
   const [showStack, setShowStack] = useState(false);
-  const [expandedFloor, setExpandedFloor] = useState<string | null>(null);
+  const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
   const [hoveredFloor, setHoveredFloor] = useState<string | null>(null);
 
   const safeSubLocs = Array.isArray(subLocs) ? subLocs : [];
+  // Reverse so index 0 = top of building (highest floor), last = ground floor
   const stackedFloors = [...safeSubLocs].reverse();
+  const totalFloors = stackedFloors.length;
   const showFloorBtn = hasFloorStack === true && safeSubLocs.length > 0;
+
+  const selectedFloorData = selectedFloor
+    ? stackedFloors.find((f) => f.name === selectedFloor) ?? null
+    : null;
 
   return (
     <div className="card-base w-full p-5 sm:p-6">
@@ -287,7 +188,7 @@ export default function LibraryCard({
         <button
           onClick={() => {
             setShowStack((v) => !v);
-            setExpandedFloor(null);
+            setSelectedFloor(null);
           }}
           style={{
             marginTop: "16px",
@@ -300,19 +201,18 @@ export default function LibraryCard({
             fontSize: "13px",
             fontWeight: 600,
             cursor: "pointer",
-            transition: "background-color 150ms ease",
           }}
         >
           {showStack ? "Hide Floor View" : "View Floor Plan →"}
         </button>
       )}
 
-      {/* Floor Stack Container */}
+      {/* 3D Building Visualization */}
       {showFloorBtn && (
         <div
           style={{
             overflow: "hidden",
-            maxHeight: showStack ? "800px" : "0px",
+            maxHeight: showStack ? "900px" : "0px",
             opacity: showStack ? 1 : 0,
             transition: "max-height 400ms ease, opacity 300ms ease",
           }}
@@ -320,36 +220,36 @@ export default function LibraryCard({
           <div
             style={{
               marginTop: "12px",
-              padding: "12px",
+              padding: "14px",
               borderRadius: "12px",
               backgroundColor: "var(--bg-elevated)",
               border: "1px solid var(--border)",
             }}
           >
-            {/* Stack header */}
+            {/* Container header */}
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                marginBottom: "10px",
+                marginBottom: "14px",
               }}
             >
               <span
                 style={{
-                  fontSize: "10px",
+                  fontSize: "11px",
                   fontWeight: 700,
                   textTransform: "uppercase",
-                  letterSpacing: "0.1em",
+                  letterSpacing: "0.08em",
                   color: "var(--text-muted)",
                 }}
               >
-                Floor Occupancy
+                {name} — Floor Overview
               </span>
               <button
                 onClick={() => {
                   setShowStack(false);
-                  setExpandedFloor(null);
+                  setSelectedFloor(null);
                 }}
                 style={{
                   background: "none",
@@ -364,23 +264,136 @@ export default function LibraryCard({
               </button>
             </div>
 
-            {/* Floor panels */}
+            {/* Building slabs — top of container = highest floor */}
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              {stackedFloors.map((floor) => (
-                <FloorPanel
-                  key={floor.name}
-                  floor={floor}
-                  isExpanded={expandedFloor === floor.name}
-                  isHovered={hoveredFloor === floor.name}
-                  onToggle={() =>
-                    setExpandedFloor((v) => (v === floor.name ? null : floor.name))
-                  }
-                  onHover={(hovered) =>
-                    setHoveredFloor(hovered ? floor.name : null)
-                  }
-                />
-              ))}
+              {stackedFloors.map((floor, i) => {
+                const lv = level(floor.percentage);
+                const isHov = hoveredFloor === floor.name;
+                const isSel = selectedFloor === floor.name;
+                // Perspective taper: top floor (i=0) is narrowest, ground floor is widest
+                const widthPct =
+                  totalFloors > 1 ? 94 + (i / (totalFloors - 1)) * 6 : 100;
+
+                return (
+                  <div
+                    key={floor.name}
+                    style={{ display: "flex", justifyContent: "center" }}
+                  >
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={isSel}
+                      onClick={() =>
+                        setSelectedFloor(isSel ? null : floor.name)
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSelectedFloor(isSel ? null : floor.name);
+                        }
+                      }}
+                      onMouseEnter={() => setHoveredFloor(floor.name)}
+                      onMouseLeave={() => setHoveredFloor(null)}
+                      style={{
+                        width: `${widthPct}%`,
+                        height: "44px",
+                        borderRadius: "4px",
+                        backgroundColor:
+                          isHov || isSel
+                            ? FLOOR_BG_ACTIVE[lv]
+                            : FLOOR_BG[lv],
+                        // Bottom edge simulates slab thickness
+                        borderBottom: `4px solid ${FLOOR_DEPTH[lv]}`,
+                        outline: isSel
+                          ? `1px solid ${FLOOR_DEPTH[lv]}`
+                          : "none",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        paddingLeft: "12px",
+                        paddingRight: "12px",
+                        cursor: "pointer",
+                        transform: isHov ? "translateY(-5px)" : "translateY(0)",
+                        boxShadow: isHov
+                          ? `0 8px 20px ${FLOOR_DEPTH[lv]}`
+                          : "none",
+                        transition:
+                          "transform 180ms ease, background-color 150ms ease, box-shadow 180ms ease",
+                        userSelect: "none",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          color: "var(--text-secondary)",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          maxWidth: "65%",
+                        }}
+                      >
+                        {floor.name}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: 700,
+                          fontVariantNumeric: "tabular-nums",
+                          color: FLOOR_TEXT[lv],
+                          flexShrink: 0,
+                        }}
+                      >
+                        {Math.round(floor.percentage * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+
+            {/* Selected floor info — appears below the building, not inline */}
+            {selectedFloorData && (
+              <div
+                style={{
+                  marginTop: "12px",
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  backgroundColor: "var(--bg-surface)",
+                  border: `1px solid ${FLOOR_DEPTH[level(selectedFloorData.percentage)]}`,
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    color: "var(--text-primary)",
+                    marginBottom: "4px",
+                  }}
+                >
+                  {selectedFloorData.name}
+                </p>
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "var(--text-muted)",
+                    fontVariantNumeric: "tabular-nums",
+                    marginBottom: "4px",
+                  }}
+                >
+                  {selectedFloorData.people} / {selectedFloorData.capacity} people
+                </p>
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: selectedFloorData.isOpen
+                      ? "var(--green)"
+                      : "var(--red)",
+                  }}
+                >
+                  {selectedFloorData.isOpen ? "● Open" : "● Closed"}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
