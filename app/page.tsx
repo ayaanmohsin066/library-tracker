@@ -1,144 +1,189 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
+import ThemeToggle from "@/components/ThemeToggle";
 
-const WaterlooTab = dynamic(() => import("@/components/tabs/WaterlooTab"));
-const ReginaTab   = dynamic(() => import("@/components/tabs/ReginaTab"));
-const UoftTab     = dynamic(() => import("@/components/tabs/UoftTab"));
+const ThreeBackground = dynamic(
+  () => import("@/components/ThreeBackground"),
+  { ssr: false }
+);
 
-type TabId = "waterloo" | "regina" | "uoft";
+const UNIS = [
+  {
+    id: "waterloo",
+    href: "/waterloo",
+    name: "University of Waterloo",
+    detail: "Dana Porter · Davis · Musagetes",
+    color: "#06b6d4",
+    border: "rgba(6,182,212,0.22)",
+    borderHov: "rgba(6,182,212,0.55)",
+    bg: "rgba(6,182,212,0.06)",
+    bgHov: "rgba(6,182,212,0.13)",
+    glow: "rgba(6,182,212,0.22)",
+  },
+  {
+    id: "regina",
+    href: "/regina",
+    name: "University of Regina",
+    detail: "Live occupancy via Waitz",
+    color: "#818cf8",
+    border: "rgba(129,140,248,0.22)",
+    borderHov: "rgba(129,140,248,0.55)",
+    bg: "rgba(129,140,248,0.06)",
+    bgHov: "rgba(129,140,248,0.13)",
+    glow: "rgba(129,140,248,0.22)",
+  },
+  {
+    id: "uoft",
+    href: "/uoft",
+    name: "University of Toronto",
+    detail: "9 libraries · Historical data",
+    color: "#10b981",
+    border: "rgba(16,185,129,0.22)",
+    borderHov: "rgba(16,185,129,0.55)",
+    bg: "rgba(16,185,129,0.06)",
+    bgHov: "rgba(16,185,129,0.13)",
+    glow: "rgba(16,185,129,0.22)",
+  },
+] as const;
 
-const TABS: { id: TabId; label: string; indicator: string }[] = [
-  { id: "waterloo", label: "Waterloo", indicator: "🟢" },
-  { id: "regina",   label: "Regina",   indicator: "🟢" },
-  { id: "uoft",     label: "UofT",     indicator: "📊" },
-];
-
-function SunIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
-      <circle cx="12" cy="12" r="5" />
-      <line x1="12" y1="1"     x2="12" y2="3" />
-      <line x1="12" y1="21"    x2="12" y2="23" />
-      <line x1="4.22" y1="4.22"   x2="5.64" y2="5.64" />
-      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-      <line x1="1"  y1="12" x2="3"  y2="12" />
-      <line x1="21" y1="12" x2="23" y2="12" />
-      <line x1="4.22" y1="19.78"  x2="5.64" y2="18.36" />
-      <line x1="18.36" y1="5.64"  x2="19.78" y2="4.22" />
-    </svg>
-  );
-}
-
-function MoonIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-  );
-}
-
-export default function Home() {
-  const [activeTab, setActiveTab] = useState<TabId>("waterloo");
-  const [isDark, setIsDark] = useState(true);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("lc-theme");
-    if (stored === "light") setIsDark(false);
-  }, []);
-
-  function toggleTheme() {
-    const next = !isDark;
-    setIsDark(next);
-    if (next) {
-      document.documentElement.removeAttribute("data-theme");
-      localStorage.setItem("lc-theme", "dark");
-    } else {
-      document.documentElement.setAttribute("data-theme", "light");
-      localStorage.setItem("lc-theme", "light");
-    }
-  }
+export default function LandingPage() {
+  const [hovered, setHovered] = useState<string | null>(null);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "var(--bg-base)" }}>
-      <div className="mx-auto max-w-5xl px-4 pb-20 pt-10 sm:px-6 lg:px-8">
+    <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-base)", position: "relative" }}>
+      <ThreeBackground />
 
-        {/* ── Header ── */}
-        <header className="mb-8 flex items-start justify-between gap-4">
-          <div>
-            <h1
-              className="text-3xl font-extrabold tracking-tight sm:text-4xl"
-              style={{
-                background: "linear-gradient(135deg, #06b6d4 0%, #818cf8 55%, #06b6d4 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              LibraryCheck
-            </h1>
-            <p
-              className="mt-1 hidden text-sm min-[380px]:block"
-              style={{ color: "var(--text-muted)" }}
-            >
-              Find a seat before you walk over.
-            </p>
-          </div>
+      {/* Theme toggle — fixed top-right */}
+      <div style={{ position: "fixed", top: 20, right: 20, zIndex: 10 }}>
+        <ThemeToggle />
+      </div>
 
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-            className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-200 hover:scale-105"
-            style={{
-              backgroundColor: "var(--bg-elevated)",
-              border: "1px solid var(--border-strong)",
-              color: "var(--text-secondary)",
-            }}
-          >
-            {isDark ? <SunIcon /> : <MoonIcon />}
-          </button>
-        </header>
+      {/* Hero */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 1,
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "80px 24px 120px",
+          textAlign: "center",
+        }}
+      >
+        <p
+          style={{
+            fontSize: "11px",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.25em",
+            color: "var(--accent)",
+            marginBottom: "20px",
+          }}
+        >
+          ✦ Real-time library occupancy
+        </p>
 
-        {/* ── Tab bar ── */}
-        <div className="mb-8 -mx-4 sm:mx-0">
-          <div className="flex flex-nowrap gap-2 overflow-x-auto px-4 pb-1 no-scrollbar sm:px-0">
-            {TABS.map((tab) => {
-              const active = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className="inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold whitespace-nowrap transition-all duration-200"
-                  style={
-                    active
-                      ? {
-                          backgroundColor: "var(--accent)",
-                          color: "#fff",
-                          boxShadow: "0 0 18px var(--accent-glow)",
-                        }
-                      : {
-                          backgroundColor: "var(--bg-elevated)",
-                          color: "var(--text-secondary)",
-                          border: "1px solid var(--border)",
-                        }
-                  }
+        <h1
+          style={{
+            fontSize: "clamp(2.8rem, 9vw, 5.5rem)",
+            fontWeight: 800,
+            lineHeight: 1.05,
+            letterSpacing: "-0.03em",
+            marginBottom: "20px",
+            background:
+              "linear-gradient(135deg, #06b6d4 0%, #818cf8 55%, #06b6d4 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
+          LibraryCheck
+        </h1>
+
+        <p
+          style={{
+            fontSize: "clamp(1rem, 2.5vw, 1.2rem)",
+            color: "var(--text-secondary)",
+            maxWidth: "400px",
+            marginBottom: "64px",
+            lineHeight: 1.6,
+          }}
+        >
+          Find a quiet seat before you walk over.
+        </p>
+
+        {/* University cards */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: "16px",
+            width: "100%",
+            maxWidth: "860px",
+          }}
+        >
+          {UNIS.map((uni) => {
+            const isHov = hovered === uni.id;
+            return (
+              <Link key={uni.id} href={uni.href} style={{ textDecoration: "none" }}>
+                <div
+                  onMouseEnter={() => setHovered(uni.id)}
+                  onMouseLeave={() => setHovered(null)}
+                  style={{
+                    padding: "24px 22px",
+                    borderRadius: "18px",
+                    border: `1px solid ${isHov ? uni.borderHov : uni.border}`,
+                    backgroundColor: isHov ? uni.bgHov : uni.bg,
+                    textAlign: "left",
+                    cursor: "pointer",
+                    transform: isHov ? "translateY(-5px)" : "translateY(0)",
+                    boxShadow: isHov ? `0 16px 48px ${uni.glow}` : "none",
+                    transition:
+                      "transform 200ms ease, box-shadow 200ms ease, border-color 150ms ease, background-color 150ms ease",
+                  }}
                 >
-                  <span>{tab.indicator}</span>
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+                  <p
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.1em",
+                      color: uni.color,
+                      marginBottom: "10px",
+                    }}
+                  >
+                    {uni.detail}
+                  </p>
+                  <h2
+                    style={{
+                      fontSize: "1.1rem",
+                      fontWeight: 700,
+                      color: "var(--text-primary)",
+                      marginBottom: "14px",
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {uni.name}
+                  </h2>
+                  <span
+                    style={{
+                      fontSize: "13px",
+                      color: uni.color,
+                      fontWeight: 600,
+                    }}
+                  >
+                    View live data →
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
-
-        {/* ── Content ── */}
-        <main className="animate-fade-up">
-          {activeTab === "waterloo" && <WaterlooTab />}
-          {activeTab === "regina"   && <ReginaTab />}
-          {activeTab === "uoft"     && <UoftTab />}
-        </main>
       </div>
     </div>
   );
