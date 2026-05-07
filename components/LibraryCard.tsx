@@ -264,7 +264,7 @@ export default function LibraryCard({
   const [hoveredFloor, setHoveredFloor] = useState<string | null>(null);
 
   // Floors are reversed so the "highest" (last in array) appears at the top of the stack
-  const stackedFloors = [...subLocs].reverse();
+  const stackedFloors = [...(subLocs ?? [])].reverse();
 
   function closeStack() {
     setShowFloorStack(false);
@@ -319,7 +319,7 @@ export default function LibraryCard({
           >
             By floor
           </p>
-          {subLocs.map((loc) => (
+          {(subLocs ?? []).map((loc) => (
             <SubLocRow key={loc.name} loc={loc} />
           ))}
         </div>
