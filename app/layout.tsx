@@ -40,17 +40,6 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>{children}</Providers>
-        <footer
-          className="px-4 py-8 text-center text-xs"
-          style={{
-            borderTop: "1px solid var(--border)",
-            backgroundColor: "var(--bg-surface)",
-            color: "var(--text-muted)",
-          }}
-        >
-          <p>Data for Waterloo and Regina via Waitz.io · UofT data is historical only</p>
-          <p className="mt-1">© 2025 LibraryCheck</p>
-        </footer>
         <Analytics />
       </body>
     </html>
