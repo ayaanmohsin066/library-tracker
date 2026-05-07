@@ -242,18 +242,75 @@ function buildDavis(pct: number, open: boolean, winMats: THREE.MeshStandardMater
   return g;
 }
 
-// ── Musagetes ─────────────────────────────────────────────────────────────────
+// ── Musagetes Architecture Library ───────────────────────────────────────────
 
 function buildMusagetes(pct: number, open: boolean, winMats: THREE.MeshStandardMaterial[]): THREE.Group {
   const g = new THREE.Group();
+  const concrete = makeConcrete();
+  const dark     = makeDarkConcrete();
   const wm = makeWindowMat(pct, open);
   winMats.push(wm);
 
-  const W = 3.8, H = 2.6, D = 3.8;
-  box(g, makeGenericWall(0x1d1d2d), W, H, D, 0, H / 2, 0);
-  box(g, makeGenericWall(0x202030), W + 0.8, 0.1, D + 0.8, 0, H + 0.05, 0);
-  box(g, makeGenericWall(0x141420), 1.4, H, 0.08, 0, H / 2, D / 2 + 0.04);
-  planeWindows(g, wm, W, H, D, 0, H / 2, 0, 4, 2);
+  // 1. MAIN BODY — low and wide
+  const mW = 6, mH = 2.5, mD = 5;
+  box(g, concrete, mW, mH, mD, 0, mH / 2, 0);
+
+  // 2. LARGE GLASS FRONT — full-width plane on front face
+  const glassMat = new THREE.MeshStandardMaterial({
+    color: 0x0a1520,
+    metalness: 0.95,
+    roughness: 0.05,
+    transparent: true,
+    opacity: 0.7,
+  });
+  const glassMesh = new THREE.Mesh(new THREE.PlaneGeometry(5, 2.3), glassMat);
+  glassMesh.position.set(0, mH / 2, mD / 2 + 0.02);
+  glassMesh.castShadow = false;
+  g.add(glassMesh);
+
+  // 3. SLANTED ROOF — tapered box: taller at back, lower over glass front
+  const roofW = 6.3, roofH = 0.9, roofD = 5.3;
+  const roofGeo = new THREE.BoxGeometry(roofW, roofH, roofD);
+  const rPos = roofGeo.attributes.position;
+  const slope = 0.7; // total height difference back-to-front
+  for (let i = 0; i < rPos.count; i++) {
+    if (rPos.getY(i) > 0) {
+      // Normalise z: -1 = back, +1 = front. Lower front, raise back.
+      const t = rPos.getZ(i) / (roofD / 2);
+      rPos.setY(i, rPos.getY(i) - t * (slope / 2));
+    }
+  }
+  rPos.needsUpdate = true;
+  roofGeo.computeVertexNormals();
+  const roof = new THREE.Mesh(roofGeo, dark);
+  roof.position.set(0, mH + roofH / 2, 0);
+  roof.castShadow = true;
+  roof.receiveShadow = true;
+  g.add(roof);
+
+  // Thin canopy line overhanging the glass front
+  box(g, dark, mW + 0.1, 0.07, 0.5, 0, mH + 0.04, mD / 2 + 0.25, false);
+
+  // 4. MINIMAL SIDE WINDOWS — 3 cols × 2 rows, sides only
+  const sideWinGeo = new THREE.BoxGeometry(0.5, 0.55, 0.05);
+  const sideZ = Array.from({ length: 3 }, (_, i) => -mD / 2 + mD * (i + 1) / 4);
+  for (const wz of sideZ) {
+    for (const wy of [0.75, 1.8]) {
+      const mr = new THREE.Mesh(sideWinGeo, wm); mr.rotation.y =  Math.PI / 2;
+      mr.position.set( mW / 2 + 0.01, wy,  wz); mr.castShadow = false; g.add(mr);
+      const ml = new THREE.Mesh(sideWinGeo, wm); ml.rotation.y = -Math.PI / 2;
+      ml.position.set(-mW / 2 - 0.01, wy, -wz); ml.castShadow = false; g.add(ml);
+    }
+  }
+
+  // Back wall — small clerestory strip near roof line
+  const backWinGeo = new THREE.BoxGeometry(4.5, 0.35, 0.05);
+  const bw = new THREE.Mesh(backWinGeo, wm);
+  bw.rotation.y = Math.PI;
+  bw.position.set(0, mH - 0.3, -mD / 2 - 0.01);
+  bw.castShadow = false;
+  g.add(bw);
+
   return g;
 }
 
