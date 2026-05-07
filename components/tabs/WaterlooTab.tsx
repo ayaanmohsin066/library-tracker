@@ -23,10 +23,7 @@ export default function WaterlooTab() {
     return <ErrorBanner onRetry={refetch} />;
   }
 
-  const FLOOR_STACK_LIBS = new Set(["Dana Porter Library"]);
-
-  const raw = Array.isArray(data?.live) ? data.live : [];
-  const libraries = raw.map((loc) => ({
+  const libraries = (data?.live ?? []).map((loc) => ({
     name: loc.name,
     percentage: loc.percentage,
     people: loc.people,
@@ -34,7 +31,6 @@ export default function WaterlooTab() {
     isOpen: loc.isOpen,
     hourSummary: loc.hourSummary,
     subLocs: loc.subLocs ?? [],
-    hasFloorStack: FLOOR_STACK_LIBS.has(loc.name),
   }));
 
   return (
