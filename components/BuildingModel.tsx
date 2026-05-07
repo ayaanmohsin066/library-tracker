@@ -174,19 +174,71 @@ function buildDanaPorter(
   return g;
 }
 
-// ── Davis ─────────────────────────────────────────────────────────────────────
+// ── Davis Centre ──────────────────────────────────────────────────────────────
 
 function buildDavis(pct: number, open: boolean, winMats: THREE.MeshStandardMaterial[]): THREE.Group {
   const g = new THREE.Group();
+  const concrete = makeConcrete();
+  const dark     = makeDarkConcrete();
   const wm = makeWindowMat(pct, open);
   winMats.push(wm);
 
-  const W = 7.5, H = 4.5, D = 4.2;
-  box(g, makeGenericWall(0x1c1c2c), W, H, D, 0, H / 2, 0);
-  box(g, makeGenericWall(0x1a1a2a), 2.5, 3.2, 2.2, -5, 1.6, 0);
-  box(g, makeGenericWall(0x222234), W + 0.3, 0.14, D + 0.3, 0, H + 0.07, 0);
-  planeWindows(g, wm, W, H, D, 0, H / 2, 0, 7, 4);
-  planeWindows(g, wm, 2.5, 3.2, 2.2, -5, 1.6, 0, 3, 3);
+  // 1. MAIN BODY
+  const mW = 8, mH = 5, mD = 5, mY = mH / 2;
+  box(g, concrete, mW, mH, mD, 0, mY, 0);
+
+  // 2. GLASS ATRIUM — right side, slightly taller
+  const atriumMat = new THREE.MeshStandardMaterial({
+    color: 0x0a1520,
+    metalness: 0.95,
+    roughness: 0.05,
+    transparent: true,
+    opacity: 0.7,
+  });
+  const aW = 3, aH = 5.2, aD = 5.2;
+  box(g, atriumMat, aW, aH, aD, mW / 2 + aW / 2, aH / 2, 0);
+
+  // 3. VERTICAL FINS — 6 per face on main body
+  const finH = 5.3;
+  const halfW = mW / 2, halfD = mD / 2;
+  for (let i = 0; i < 6; i++) {
+    const tx = -halfW + mW * (i + 0.5) / 6;
+    const tz = -halfD + mD * (i + 0.5) / 6;
+
+    // Front (+z)
+    const ffGeo = new THREE.BoxGeometry(0.12, finH, 0.15);
+    const ff = new THREE.Mesh(ffGeo, dark);
+    ff.position.set(tx, mY,  halfD + 0.075); ff.castShadow = true; g.add(ff);
+    const fb = new THREE.Mesh(ffGeo.clone(), dark);
+    fb.position.set(tx, mY, -halfD - 0.075); fb.castShadow = true; g.add(fb);
+
+    // Left only — atrium occupies the right face
+    const flGeo = new THREE.BoxGeometry(0.15, finH, 0.12);
+    const fl = new THREE.Mesh(flGeo, dark);
+    fl.position.set(-halfW - 0.075, mY, tz); fl.castShadow = true; g.add(fl);
+  }
+
+  // 4. WINDOW GRID — 5 cols × 4 rows, shared material
+  const COLS = 5, ROWS = 4, EPS = 0.01;
+  const wW = 0.5, wH = 0.55, wD = 0.05;
+  const winGeo = new THREE.BoxGeometry(wW, wH, wD);
+  const colX = Array.from({ length: COLS }, (_, i) => -halfW + mW * (i + 1) / (COLS + 1));
+  const colZ = Array.from({ length: COLS }, (_, i) => -halfD + mD * (i + 1) / (COLS + 1));
+  const rowY = Array.from({ length: ROWS }, (_, i) => mY - mH / 2 + mH * (i + 1) / (ROWS + 1));
+
+  for (const wy of rowY) {
+    for (let c = 0; c < COLS; c++) {
+      const mf = new THREE.Mesh(winGeo, wm); mf.position.set( colX[c], wy,  halfD + EPS); mf.castShadow = false; g.add(mf);
+      const mb = new THREE.Mesh(winGeo, wm); mb.rotation.y = Math.PI;
+                                              mb.position.set(-colX[c], wy, -halfD - EPS); mb.castShadow = false; g.add(mb);
+      const ml = new THREE.Mesh(winGeo, wm); ml.rotation.y = -Math.PI / 2;
+                                              ml.position.set(-halfW - EPS, wy, colZ[c]); ml.castShadow = false; g.add(ml);
+    }
+  }
+
+  // 5. ENTRANCE OVERHANG
+  box(g, dark, 4, 0.2, 2, 0, 1.5, halfD + 1, false);
+
   return g;
 }
 
