@@ -11,48 +11,67 @@ interface Props {
   isOpen: boolean;
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Materials ─────────────────────────────────────────────────────────────────
 
-function winProps(pct: number, open: boolean) {
-  if (!open) return { hex: 0x0a0a1e, intensity: 0.04 };
-  if (pct >= 80) return { hex: 0xef4444, intensity: 1.4 };
-  if (pct >= 50) return { hex: 0xf59e0b, intensity: 1.2 };
-  return { hex: 0x10b981, intensity: 1.0 };
-}
-
-function wallMat(color = 0x1c1c2a) {
-  return new THREE.MeshStandardMaterial({ color, roughness: 0.85, metalness: 0.12 });
-}
-
-function makeWinMat(hex: number, intensity: number) {
+function makeConcrete() {
   return new THREE.MeshStandardMaterial({
-    color: 0x050510,
-    emissive: new THREE.Color(hex),
-    emissiveIntensity: intensity,
-    roughness: 0.05,
-    metalness: 0.95,
-    transparent: true,
-    opacity: 0.92,
+    color: 0x2c2c38,
+    roughness: 0.85,
+    metalness: 0.05,
+    envMapIntensity: 0.5,
   });
 }
 
-function addBox(
+function makeDarkConcrete() {
+  return new THREE.MeshStandardMaterial({
+    color: 0x1a1a24,
+    roughness: 0.85,
+    metalness: 0.05,
+    envMapIntensity: 0.5,
+  });
+}
+
+function winColor(pct: number): number {
+  if (pct >= 80) return 0xef4444;
+  if (pct >= 50) return 0xf59e0b;
+  return 0x10b981;
+}
+
+function makeWindowMat(pct: number, open: boolean): THREE.MeshStandardMaterial {
+  return new THREE.MeshStandardMaterial({
+    color: 0x0a0a14,
+    emissive: new THREE.Color(winColor(pct)),
+    emissiveIntensity: open ? 0.7 : 0.05,
+    roughness: 0.1,
+    metalness: 0.9,
+    transparent: true,
+    opacity: 0.95,
+  });
+}
+
+function makeGenericWall(color = 0x1c1c2a) {
+  return new THREE.MeshStandardMaterial({ color, roughness: 0.85, metalness: 0.12 });
+}
+
+// ── Mesh helpers ──────────────────────────────────────────────────────────────
+
+function box(
   g: THREE.Group,
   mat: THREE.Material,
   W: number, H: number, D: number,
-  x: number, y: number, z: number
-) {
+  x: number, y: number, z: number,
+  shadows = true
+): THREE.Mesh {
   const m = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), mat);
   m.position.set(x, y, z);
-  m.castShadow = true;
-  m.receiveShadow = true;
+  m.castShadow = shadows;
+  m.receiveShadow = shadows;
   g.add(m);
   return m;
 }
 
-// Place a window-plane grid on all 4 vertical faces of a box volume.
-// All planes share the same material instance so live updates apply everywhere.
-function addWindows(
+// Place PlaneGeometry windows on all 4 vertical faces — for non-dana-porter buildings
+function planeWindows(
   g: THREE.Group,
   mat: THREE.Material,
   W: number, H: number, D: number,
@@ -62,127 +81,160 @@ function addWindows(
   const EPS = 0.018;
   const wW = (W / (cols + 1)) * 0.52;
   const wH = (H / (rows + 1)) * 0.56;
-  const wD = (D / (cols + 1)) * 0.52;
-
+  const wDep = (D / (cols + 1)) * 0.52;
   const gFB = new THREE.PlaneGeometry(wW, wH);
-  const gLR = new THREE.PlaneGeometry(wD, wH);
-
+  const gLR = new THREE.PlaneGeometry(wDep, wH);
   const xs = Array.from({ length: cols }, (_, i) => -W / 2 + (W / (cols + 1)) * (i + 1));
   const zs = Array.from({ length: cols }, (_, i) => -D / 2 + (D / (cols + 1)) * (i + 1));
   const ys = Array.from({ length: rows }, (_, i) => -H / 2 + (H / (rows + 1)) * (i + 1));
-
-  for (const yOff of ys) {
-    const wy = cy + yOff;
+  for (const yO of ys) {
+    const wy = cy + yO;
     for (let c = 0; c < cols; c++) {
-      const mf = new THREE.Mesh(gFB, mat);
-      mf.position.set(cx + xs[c], wy, cz + D / 2 + EPS);
-      g.add(mf);
-
-      const mb = new THREE.Mesh(gFB, mat);
-      mb.rotation.y = Math.PI;
-      mb.position.set(cx - xs[c], wy, cz - D / 2 - EPS);
-      g.add(mb);
-
-      const mr = new THREE.Mesh(gLR, mat);
-      mr.rotation.y = Math.PI / 2;
-      mr.position.set(cx + W / 2 + EPS, wy, cz - zs[c]);
-      g.add(mr);
-
-      const ml = new THREE.Mesh(gLR, mat);
-      ml.rotation.y = -Math.PI / 2;
-      ml.position.set(cx - W / 2 - EPS, wy, cz + zs[c]);
-      g.add(ml);
+      const mf = new THREE.Mesh(gFB, mat); mf.position.set(cx + xs[c], wy, cz + D / 2 + EPS); g.add(mf);
+      const mb = new THREE.Mesh(gFB, mat); mb.rotation.y = Math.PI; mb.position.set(cx - xs[c], wy, cz - D / 2 - EPS); g.add(mb);
+      const mr = new THREE.Mesh(gLR, mat); mr.rotation.y = Math.PI / 2; mr.position.set(cx + W / 2 + EPS, wy, cz - zs[c]); g.add(mr);
+      const ml = new THREE.Mesh(gLR, mat); ml.rotation.y = -Math.PI / 2; ml.position.set(cx - W / 2 - EPS, wy, cz + zs[c]); g.add(ml);
     }
   }
 }
 
-// ── Building geometries ───────────────────────────────────────────────────────
+// ── Dana Porter ───────────────────────────────────────────────────────────────
 
-function buildDanaPorter(wm: THREE.Material): THREE.Group {
+function buildDanaPorter(
+  pct: number,
+  open: boolean,
+  winMats: THREE.MeshStandardMaterial[],
+  winMeshes: THREE.Mesh[]
+): THREE.Group {
   const g = new THREE.Group();
+  const concrete = makeConcrete();
+  const dark     = makeDarkConcrete();
 
-  // Wide low podium
-  addBox(g, wallMat(0x1a1a28), 5.5, 1.5, 5.5, 0, 0.75, 0);
-  addWindows(g, wm, 5.5, 1.5, 5.5, 0, 0.75, 0, 4, 1);
+  // 1. BASE SLAB
+  box(g, concrete, 7, 0.8, 7, 0, 0.4, 0);
 
-  // Tall central tower
-  const tW = 3.4, tH = 11, tD = 3.4;
-  const tY = 1.5 + tH / 2;
-  addBox(g, wallMat(0x1e1e2e), tW, tH, tD, 0, tY, 0);
+  // 2. MAIN TOWER
+  const tW = 4.5, tH = 11, tD = 4.5, tY = 6.4;
+  box(g, concrete, tW, tH, tD, 0, tY, 0);
 
-  // Horizontal floor-plate banding
-  for (let i = 0; i <= 9; i++) {
-    addBox(g, wallMat(0x26263a), tW + 0.18, 0.08, tD + 0.18, 0, 1.5 + 1.1 * i, 0);
+  const halfW = tW / 2, halfD = tD / 2;
+
+  // 3. VERTICAL CONCRETE FINS — 8 per face, 32 total
+  for (let i = 0; i < 8; i++) {
+    const tx = -halfW + tW * (i + 0.5) / 8;
+    const tz = -halfD + tD * (i + 0.5) / 8;
+
+    // Front / Back: fin width along X, depth proud in Z
+    const fbGeo = new THREE.BoxGeometry(0.12, 11.2, 0.15);
+    const ff = new THREE.Mesh(fbGeo, dark); ff.position.set(tx, tY,  halfD + 0.075); ff.castShadow = true; g.add(ff);
+    const fb = new THREE.Mesh(fbGeo.clone(), dark); fb.position.set(tx, tY, -halfD - 0.075); fb.castShadow = true; g.add(fb);
+
+    // Right / Left: fin width along Z, depth proud in X
+    const rlGeo = new THREE.BoxGeometry(0.15, 11.2, 0.12);
+    const fr = new THREE.Mesh(rlGeo, dark); fr.position.set( halfW + 0.075, tY, tz);  fr.castShadow = true; g.add(fr);
+    const fl = new THREE.Mesh(rlGeo.clone(), dark); fl.position.set(-halfW - 0.075, tY, -tz); fl.castShadow = true; g.add(fl);
   }
 
-  addWindows(g, wm, tW, tH, tD, 0, tY, 0, 4, 10);
+  // 4. WINDOW GRID — 4 cols × 8 rows per face, individual materials for pulse
+  const COLS = 4, ROWS = 8;
+  const wW = 0.45, wH = 0.65, wD = 0.05, EPS = 0.01;
+  const colX = Array.from({ length: COLS }, (_, i) => -halfW + tW * (i + 1) / (COLS + 1));
+  const colZ = Array.from({ length: COLS }, (_, i) => -halfD + tD * (i + 1) / (COLS + 1));
+  const rowY  = Array.from({ length: ROWS }, (_, i) => tY - tH / 2 + tH * (i + 1) / (ROWS + 1));
+  const winGeo = new THREE.BoxGeometry(wW, wH, wD);
 
-  // Rooftop mechanical penthouse
-  addBox(g, wallMat(0x181826), 1.8, 0.9, 1.8, 0, 1.5 + tH + 0.45, 0);
+  const addWin = (x: number, y: number, z: number, ry: number) => {
+    const mat = makeWindowMat(pct, open);
+    winMats.push(mat);
+    const m = new THREE.Mesh(winGeo, mat);
+    m.position.set(x, y, z);
+    m.rotation.y = ry;
+    m.castShadow = false;
+    g.add(m);
+    winMeshes.push(m);
+  };
+
+  for (const wy of rowY) {
+    for (let c = 0; c < COLS; c++) {
+      addWin( colX[c],        wy,  halfD + EPS,       0         ); // front
+      addWin(-colX[c],        wy, -halfD - EPS,       Math.PI   ); // back
+      addWin( halfW + EPS,    wy, -colZ[c],           Math.PI/2 ); // right
+      addWin(-halfW - EPS,    wy,  colZ[c],          -Math.PI/2 ); // left
+    }
+  }
+
+  // 5. ROOF CAP + ANTENNA
+  const roofY = tY + tH / 2;
+  box(g, dark, 4.7, 0.25, 4.7, 0, roofY + 0.125, 0);
+  box(g, dark, 0.3, 1.5,  0.3, 0, roofY + 0.25 + 0.75, 0);
+
+  // 6. BASE ENTRANCE CANOPY
+  box(g, dark, 2, 1.6, 0.2, 0, 1.2, 3.6);
 
   return g;
 }
 
-function buildDavis(wm: THREE.Material): THREE.Group {
-  const g = new THREE.Group();
+// ── Davis ─────────────────────────────────────────────────────────────────────
 
-  // Main block
+function buildDavis(pct: number, open: boolean, winMats: THREE.MeshStandardMaterial[]): THREE.Group {
+  const g = new THREE.Group();
+  const wm = makeWindowMat(pct, open);
+  winMats.push(wm);
+
   const W = 7.5, H = 4.5, D = 4.2;
-  addBox(g, wallMat(0x1c1c2c), W, H, D, 0, H / 2, 0);
-  addWindows(g, wm, W, H, D, 0, H / 2, 0, 7, 4);
-
-  // Lower side wing
-  addBox(g, wallMat(0x1a1a2a), 2.5, 3.2, 2.2, -5, 1.6, 0);
-  addWindows(g, wm, 2.5, 3.2, 2.2, -5, 1.6, 0, 3, 3);
-
-  // Roof parapet / cornice
-  addBox(g, wallMat(0x222234), W + 0.3, 0.14, D + 0.3, 0, H + 0.07, 0);
-
+  box(g, makeGenericWall(0x1c1c2c), W, H, D, 0, H / 2, 0);
+  box(g, makeGenericWall(0x1a1a2a), 2.5, 3.2, 2.2, -5, 1.6, 0);
+  box(g, makeGenericWall(0x222234), W + 0.3, 0.14, D + 0.3, 0, H + 0.07, 0);
+  planeWindows(g, wm, W, H, D, 0, H / 2, 0, 7, 4);
+  planeWindows(g, wm, 2.5, 3.2, 2.2, -5, 1.6, 0, 3, 3);
   return g;
 }
 
-function buildMusagetes(wm: THREE.Material): THREE.Group {
+// ── Musagetes ─────────────────────────────────────────────────────────────────
+
+function buildMusagetes(pct: number, open: boolean, winMats: THREE.MeshStandardMaterial[]): THREE.Group {
   const g = new THREE.Group();
+  const wm = makeWindowMat(pct, open);
+  winMats.push(wm);
 
   const W = 3.8, H = 2.6, D = 3.8;
-  addBox(g, wallMat(0x1d1d2d), W, H, D, 0, H / 2, 0);
-  addWindows(g, wm, W, H, D, 0, H / 2, 0, 4, 2);
-
-  // Wide flat roof overhang
-  addBox(g, wallMat(0x202030), W + 0.8, 0.1, D + 0.8, 0, H + 0.05, 0);
-
-  // Thin glass curtain-wall entrance strip
-  addBox(g, wallMat(0x141420), 1.4, H, 0.08, 0, H / 2, D / 2 + 0.04);
-
+  box(g, makeGenericWall(0x1d1d2d), W, H, D, 0, H / 2, 0);
+  box(g, makeGenericWall(0x202030), W + 0.8, 0.1, D + 0.8, 0, H + 0.05, 0);
+  box(g, makeGenericWall(0x141420), 1.4, H, 0.08, 0, H / 2, D / 2 + 0.04);
+  planeWindows(g, wm, W, H, D, 0, H / 2, 0, 4, 2);
   return g;
 }
 
-function buildGeneric(wm: THREE.Material): THREE.Group {
+// ── Generic ───────────────────────────────────────────────────────────────────
+
+function buildGeneric(pct: number, open: boolean, winMats: THREE.MeshStandardMaterial[]): THREE.Group {
   const g = new THREE.Group();
+  const wm = makeWindowMat(pct, open);
+  winMats.push(wm);
 
   const W = 5.2, H = 6.5, D = 4.2;
-  addBox(g, wallMat(0x1c1c2c), W, H, D, 0, H / 2, 0);
-
-  // Side annex
-  addBox(g, wallMat(0x1a1a2a), 2.2, 3.8, 3.2, 3.6, 1.9, 0);
-  addWindows(g, wm, 2.2, 3.8, 3.2, 3.6, 1.9, 0, 2, 3);
-
-  // Horizontal ledge details
-  for (let i = 1; i <= 5; i++) {
-    addBox(g, wallMat(0x232336), W + 0.12, 0.07, D + 0.12, 0, i * 1.1, 0);
-  }
-
-  addWindows(g, wm, W, H, D, 0, H / 2, 0, 5, 6);
-
+  box(g, makeGenericWall(0x1c1c2c), W, H, D, 0, H / 2, 0);
+  box(g, makeGenericWall(0x1a1a2a), 2.2, 3.8, 3.2, 3.6, 1.9, 0);
+  for (let i = 1; i <= 5; i++) box(g, makeGenericWall(0x232336), W + 0.12, 0.07, D + 0.12, 0, i * 1.1, 0);
+  planeWindows(g, wm, W, H, D, 0, H / 2, 0, 5, 6);
+  planeWindows(g, wm, 2.2, 3.8, 3.2, 3.6, 1.9, 0, 2, 3);
   return g;
 }
 
-function buildStructure(type: BuildingType, wm: THREE.Material): THREE.Group {
+// ── Build dispatch ────────────────────────────────────────────────────────────
+
+function buildStructure(
+  type: BuildingType,
+  pct: number,
+  open: boolean,
+  winMats: THREE.MeshStandardMaterial[],
+  winMeshes: THREE.Mesh[]
+): THREE.Group {
   switch (type) {
-    case "dana-porter": return buildDanaPorter(wm);
-    case "davis":       return buildDavis(wm);
-    case "musagetes":   return buildMusagetes(wm);
-    default:            return buildGeneric(wm);
+    case "dana-porter": return buildDanaPorter(pct, open, winMats, winMeshes);
+    case "davis":       return buildDavis(pct, open, winMats);
+    case "musagetes":   return buildMusagetes(pct, open, winMats);
+    default:            return buildGeneric(pct, open, winMats);
   }
 }
 
@@ -205,10 +257,9 @@ const CAM_TARGET_Y: Record<BuildingType, number> = {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function BuildingModel({ buildingType, occupancyPercent, isOpen }: Props) {
-  const mountRef  = useRef<HTMLDivElement>(null);
-  const winMatRef = useRef<THREE.MeshStandardMaterial | null>(null);
+  const mountRef   = useRef<HTMLDivElement>(null);
+  const winMatsRef = useRef<THREE.MeshStandardMaterial[]>([]);
 
-  // Always-current refs so scene-init closure reads latest values
   const pctRef  = useRef(occupancyPercent);
   const openRef = useRef(isOpen);
   pctRef.current  = occupancyPercent;
@@ -243,7 +294,7 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen }
     camera.position.set(cpx, cpy, cpz);
     camera.lookAt(0, targetY, 0);
 
-    // ── Lighting ────────────────────────────────────────────────────────────
+    // Lights
     scene.add(new THREE.AmbientLight(0x0a0a1a, 0.3));
 
     const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
@@ -259,19 +310,17 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen }
     dirLight.shadow.camera.bottom = -20;
     scene.add(dirLight);
 
-    // Cyan accent — front-left low
     const cyanLight = new THREE.PointLight(0x06b6d4, 2.0, 30);
     cyanLight.position.set(-8, 3, 8);
     scene.add(cyanLight);
 
-    // Warm amber — back-right
     const warmLight = new THREE.PointLight(0xf59e0b, 0.8, 25);
     warmLight.position.set(8, 1, -8);
     scene.add(warmLight);
 
     scene.add(new THREE.HemisphereLight(0x1a1a3e, 0x0a0a0a, 0.5));
 
-    // ── Ground plane ────────────────────────────────────────────────────────
+    // Ground
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(40, 40),
       new THREE.MeshStandardMaterial({ color: 0x050508, roughness: 0.8, metalness: 0.2 })
@@ -286,14 +335,14 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen }
     grid.position.y = 0.01;
     scene.add(grid);
 
-    // ── Building ────────────────────────────────────────────────────────────
-    const wp = winProps(pctRef.current, openRef.current);
-    const wm = makeWinMat(wp.hex, wp.intensity);
-    winMatRef.current = wm;
-    const building = buildStructure(buildingType, wm);
+    // Building
+    const winMats: THREE.MeshStandardMaterial[] = [];
+    const winMeshes: THREE.Mesh[] = [];
+    const building = buildStructure(buildingType, pctRef.current, openRef.current, winMats, winMeshes);
+    winMatsRef.current = winMats;
     scene.add(building);
 
-    // ── Manual orbit controls ───────────────────────────────────────────────
+    // Orbit controls
     let isDragging = false;
     let autoRotate = true;
     let prevX = 0, prevY = 0;
@@ -309,25 +358,17 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen }
     canvas.style.cursor = "grab";
 
     const onMouseDown = (e: MouseEvent) => {
-      isDragging = true;
-      autoRotate = false;
-      clearTimeout(resumeTimer);
+      isDragging = true; autoRotate = false; clearTimeout(resumeTimer);
       prevX = e.clientX; prevY = e.clientY;
       canvas.style.cursor = "grabbing";
     };
     const onMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
-      const dx = e.clientX - prevX;
-      const dy = e.clientY - prevY;
-      building.rotation.y += dx * 0.007;
-      building.rotation.x = Math.max(-0.4, Math.min(0.5, building.rotation.x + dy * 0.005));
+      building.rotation.y += (e.clientX - prevX) * 0.007;
+      building.rotation.x  = Math.max(-0.4, Math.min(0.5, building.rotation.x + (e.clientY - prevY) * 0.005));
       prevX = e.clientX; prevY = e.clientY;
     };
-    const onMouseUp = () => {
-      isDragging = false;
-      canvas.style.cursor = "grab";
-      pauseAuto();
-    };
+    const onMouseUp = () => { isDragging = false; canvas.style.cursor = "grab"; pauseAuto(); };
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -335,7 +376,7 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen }
       const dir = new THREE.Vector3().subVectors(target, camera.position).normalize();
       camera.position.addScaledVector(dir, e.deltaY * 0.02);
       const dist = camera.position.distanceTo(target);
-      if (dist < 8)  camera.position.addScaledVector(dir, -(8  - dist));
+      if (dist <  8) camera.position.addScaledVector(dir, -(8  - dist));
       if (dist > 25) camera.position.addScaledVector(dir,  dist - 25);
     };
 
@@ -346,10 +387,8 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen }
     };
     const onTouchMove = (e: TouchEvent) => {
       e.preventDefault();
-      const dx = e.touches[0].clientX - prevTX;
-      const dy = e.touches[0].clientY - prevTY;
-      building.rotation.y += dx * 0.008;
-      building.rotation.x = Math.max(-0.4, Math.min(0.5, building.rotation.x + dy * 0.006));
+      building.rotation.y += (e.touches[0].clientX - prevTX) * 0.008;
+      building.rotation.x  = Math.max(-0.4, Math.min(0.5, building.rotation.x + (e.touches[0].clientY - prevTY) * 0.006));
       prevTX = e.touches[0].clientX; prevTY = e.touches[0].clientY;
     };
     const onTouchEnd = () => pauseAuto();
@@ -357,31 +396,55 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen }
     canvas.addEventListener("mousedown",  onMouseDown);
     window.addEventListener("mousemove",  onMouseMove);
     window.addEventListener("mouseup",    onMouseUp);
-    canvas.addEventListener("wheel",      onWheel, { passive: false });
-    canvas.addEventListener("touchstart", onTouchStart, { passive: true });
-    canvas.addEventListener("touchmove",  onTouchMove,  { passive: false });
+    canvas.addEventListener("wheel",      onWheel,       { passive: false });
+    canvas.addEventListener("touchstart", onTouchStart,  { passive: true  });
+    canvas.addEventListener("touchmove",  onTouchMove,   { passive: false });
     canvas.addEventListener("touchend",   onTouchEnd);
 
     const onResize = () => {
-      const nw = mount.clientWidth;
-      const nh = mount.clientHeight;
+      const nw = mount.clientWidth, nh = mount.clientHeight;
       if (!nw || !nh) return;
-      camera.aspect = nw / nh;
-      camera.updateProjectionMatrix();
-      renderer.setSize(nw, nh);
+      camera.aspect = nw / nh; camera.updateProjectionMatrix(); renderer.setSize(nw, nh);
     };
     window.addEventListener("resize", onResize);
 
-    // ── Animation loop ──────────────────────────────────────────────────────
+    // Window pulse animation — Dana Porter only
+    type PulseEntry = { mat: THREE.MeshStandardMaterial; startMs: number };
+    let pulsing: PulseEntry[] = [];
+    let lastPulseMs = 0;
+
+    // Animation loop
     let raf = 0;
     const tick = () => {
       raf = requestAnimationFrame(tick);
+
       if (autoRotate) building.rotation.y += 0.003;
+
+      // Pulse: trigger every 3 s when open, dana-porter only
+      if (buildingType === "dana-porter" && openRef.current && winMeshes.length > 0) {
+        const now = performance.now();
+        if (now - lastPulseMs > 3000) {
+          lastPulseMs = now;
+          const count = 2 + Math.floor(Math.random() * 3); // 2–4
+          for (let i = 0; i < count; i++) {
+            const mesh = winMeshes[Math.floor(Math.random() * winMeshes.length)];
+            pulsing.push({ mat: mesh.material as THREE.MeshStandardMaterial, startMs: now });
+          }
+        }
+
+        const base = openRef.current ? 0.7 : 0.05;
+        pulsing = pulsing.filter(({ mat, startMs }) => {
+          const t = (performance.now() - startMs) / 800; // 0.8 s
+          if (t >= 1) { mat.emissiveIntensity = base; return false; }
+          mat.emissiveIntensity = base + Math.sin(t * Math.PI) * 0.5; // 0.7 → 1.2 → 0.7
+          return true;
+        });
+      }
+
       renderer.render(scene, camera);
     };
     tick();
 
-    // ── Cleanup ─────────────────────────────────────────────────────────────
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(resumeTimer);
@@ -405,32 +468,24 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildingType]);
 
-  // ── Live window color updates (no scene rebuild) ──────────────────────────
+  // ── Live window color / intensity update ──────────────────────────────────
   useEffect(() => {
-    const mat = winMatRef.current;
-    if (!mat) return;
-    const wp = winProps(occupancyPercent, isOpen);
-    mat.emissive.setHex(wp.hex);
-    mat.emissiveIntensity = wp.intensity;
-    mat.needsUpdate = true;
+    const hex   = winColor(occupancyPercent);
+    const intensity = isOpen ? 0.7 : 0.05;
+    for (const mat of winMatsRef.current) {
+      mat.emissive.setHex(hex);
+      mat.emissiveIntensity = intensity;
+      mat.needsUpdate = true;
+    }
   }, [occupancyPercent, isOpen]);
 
   return (
     <div>
-      <div
-        ref={mountRef}
-        style={{ width: "100%", height: "320px", cursor: "grab" }}
-      />
-      <p
-        style={{
-          textAlign: "center",
-          fontSize: "11px",
-          color: "var(--text-muted)",
-          marginTop: "8px",
-          letterSpacing: "0.05em",
-          userSelect: "none",
-        }}
-      >
+      <div ref={mountRef} style={{ width: "100%", height: "320px", cursor: "grab" }} />
+      <p style={{
+        textAlign: "center", fontSize: "11px", color: "var(--text-muted)",
+        marginTop: "8px", letterSpacing: "0.05em", userSelect: "none",
+      }}>
         ⟳ Drag to explore · Scroll to zoom
       </p>
     </div>
