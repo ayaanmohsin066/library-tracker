@@ -17,7 +17,7 @@ interface LibraryCardProps {
   capacity: number;
   isOpen: boolean;
   hourSummary: string;
-  subLocs: SubLocation[];
+  subLocs?: SubLocation[];
   compareSummary?: string;
   hasFloorStack?: boolean;
 }
@@ -308,7 +308,7 @@ export default function LibraryCard({
       </p>
 
       {/* ── By-floor rows ── */}
-      {subLocs.length > 0 && (
+      {(subLocs ?? []).length > 0 && (
         <div
           className="mt-4 space-y-2.5 pt-4"
           style={{ borderTop: "1px solid var(--border)" }}
@@ -326,7 +326,7 @@ export default function LibraryCard({
       )}
 
       {/* ── View Floor Plan button ── */}
-      {hasFloorStack && subLocs.length > 0 && (
+      {hasFloorStack && (subLocs ?? []).length > 0 && (
         <button
           onClick={() => {
             setShowFloorStack((v) => !v);
