@@ -3,13 +3,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
-export type BuildingType =
-  | "dana-porter"
-  | "davis"
-  | "musagetes"
-  | "robarts"
-  | "gerstein"
-  | "generic";
+export type BuildingType = "dana-porter" | "davis" | "musagetes" | "generic";
 
 interface Props {
   buildingType: BuildingType;
@@ -17,289 +11,349 @@ interface Props {
   isOpen: boolean;
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
-function getWinProps(pct: number, open: boolean) {
-  if (!open) return { hex: 0x1a1a2e, intensity: 0.08 };
-  if (pct >= 80) return { hex: 0xef4444, intensity: 0.65 };
-  if (pct >= 50) return { hex: 0xf59e0b, intensity: 0.65 };
-  return { hex: 0x10b981, intensity: 0.65 };
+function winProps(pct: number, open: boolean) {
+  if (!open) return { hex: 0x0a0a1e, intensity: 0.04 };
+  if (pct >= 80) return { hex: 0xef4444, intensity: 1.4 };
+  if (pct >= 50) return { hex: 0xf59e0b, intensity: 1.2 };
+  return { hex: 0x10b981, intensity: 1.0 };
 }
 
-function evenSpace(lo: number, hi: number, n: number): number[] {
-  if (n <= 0) return [];
-  if (n === 1) return [(lo + hi) / 2];
-  return Array.from({ length: n }, (_, i) => lo + (hi - lo) * (i / (n - 1)));
-}
-
-function makeWallMat() {
-  return new THREE.MeshStandardMaterial({
-    color: 0x2a2a35,
-    roughness: 0.82,
-    metalness: 0.08,
-  });
+function wallMat(color = 0x1c1c2a) {
+  return new THREE.MeshStandardMaterial({ color, roughness: 0.85, metalness: 0.12 });
 }
 
 function makeWinMat(hex: number, intensity: number) {
   return new THREE.MeshStandardMaterial({
-    color: 0x080814,
+    color: 0x050510,
     emissive: new THREE.Color(hex),
     emissiveIntensity: intensity,
-    roughness: 0.25,
+    roughness: 0.05,
+    metalness: 0.95,
+    transparent: true,
+    opacity: 0.92,
   });
 }
 
-// Place a grid of window planes on all 4 vertical faces of a box.
-// Box center is at (cx, cy, cz) with dimensions W × H × D.
-function addBoxWindows(
-  parent: THREE.Group,
+function addBox(
+  g: THREE.Group,
+  mat: THREE.Material,
+  W: number, H: number, D: number,
+  x: number, y: number, z: number
+) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), mat);
+  m.position.set(x, y, z);
+  m.castShadow = true;
+  m.receiveShadow = true;
+  g.add(m);
+  return m;
+}
+
+// Place a window-plane grid on all 4 vertical faces of a box volume.
+// All planes share the same material instance so live updates apply everywhere.
+function addWindows(
+  g: THREE.Group,
   mat: THREE.Material,
   W: number, H: number, D: number,
   cx: number, cy: number, cz: number,
   cols: number, rows: number
 ) {
-  const EPS = 0.016;
-  const wW  = (W / (cols + 1)) * 0.50;
-  const wWd = (D / (cols + 1)) * 0.50;
-  const wH  = (H / (rows + 1)) * 0.52;
+  const EPS = 0.018;
+  const wW = (W / (cols + 1)) * 0.52;
+  const wH = (H / (rows + 1)) * 0.56;
+  const wD = (D / (cols + 1)) * 0.52;
 
-  const gFB = new THREE.PlaneGeometry(wW,  wH);
-  const gLR = new THREE.PlaneGeometry(wWd, wH);
+  const gFB = new THREE.PlaneGeometry(wW, wH);
+  const gLR = new THREE.PlaneGeometry(wD, wH);
 
-  const xs = evenSpace(-W / 2 + W / (cols + 1), W / 2 - W / (cols + 1), cols);
-  const zs = evenSpace(-D / 2 + D / (cols + 1), D / 2 - D / (cols + 1), cols);
-  const ys = evenSpace(-H / 2 + H / (rows + 1), H / 2 - H / (rows + 1), rows);
+  const xs = Array.from({ length: cols }, (_, i) => -W / 2 + (W / (cols + 1)) * (i + 1));
+  const zs = Array.from({ length: cols }, (_, i) => -D / 2 + (D / (cols + 1)) * (i + 1));
+  const ys = Array.from({ length: rows }, (_, i) => -H / 2 + (H / (rows + 1)) * (i + 1));
 
   for (const yOff of ys) {
     const wy = cy + yOff;
     for (let c = 0; c < cols; c++) {
-      // Front (+z)
       const mf = new THREE.Mesh(gFB, mat);
       mf.position.set(cx + xs[c], wy, cz + D / 2 + EPS);
-      parent.add(mf);
+      g.add(mf);
 
-      // Back (-z)
       const mb = new THREE.Mesh(gFB, mat);
       mb.rotation.y = Math.PI;
       mb.position.set(cx - xs[c], wy, cz - D / 2 - EPS);
-      parent.add(mb);
+      g.add(mb);
 
-      // Right (+x)
       const mr = new THREE.Mesh(gLR, mat);
       mr.rotation.y = Math.PI / 2;
       mr.position.set(cx + W / 2 + EPS, wy, cz - zs[c]);
-      parent.add(mr);
+      g.add(mr);
 
-      // Left (-x)
       const ml = new THREE.Mesh(gLR, mat);
       ml.rotation.y = -Math.PI / 2;
       ml.position.set(cx - W / 2 - EPS, wy, cz + zs[c]);
-      parent.add(ml);
+      g.add(ml);
     }
   }
 }
 
-function buildBuilding(type: BuildingType, wm: THREE.MeshStandardMaterial): THREE.Group {
-  const g    = new THREE.Group();
-  const wall = makeWallMat();
+// ── Building geometries ───────────────────────────────────────────────────────
 
-  switch (type) {
-    case "dana-porter": {
-      const tW = 3, tH = 8, tD = 3;
-      const tower = new THREE.Mesh(new THREE.BoxGeometry(tW, tH, tD), wall);
-      tower.position.y = tH / 2;
-      g.add(tower);
-      const pW = 4.4, pH = 0.9, pD = 4.4;
-      const pod = new THREE.Mesh(new THREE.BoxGeometry(pW, pH, pD), wall.clone());
-      pod.position.y = -pH / 2;
-      g.add(pod);
-      addBoxWindows(g, wm, tW, tH, tD, 0, tH / 2, 0, 6, 9);
-      break;
-    }
-    case "davis": {
-      const W = 5, H = 4, D = 3;
-      const main = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), wall);
-      main.position.y = H / 2;
-      g.add(main);
-      addBoxWindows(g, wm, W, H, D, 0, H / 2, 0, 7, 5);
-      break;
-    }
-    case "musagetes": {
-      const W = 3, H = 2, D = 3;
-      const main = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), wall);
-      main.position.y = H / 2;
-      g.add(main);
-      addBoxWindows(g, wm, W, H, D, 0, H / 2, 0, 4, 3);
-      break;
-    }
-    case "robarts": {
-      const H = 10;
-      // Distinctive triangular brutalist tower — 3-sided cylinder
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(2.0, 2.3, H, 3), wall);
-      body.position.y = H / 2;
-      body.rotation.y = Math.PI / 6; // orient flat face toward viewer
-      g.add(body);
-      // Windows approximated on a box proxy (slightly inside the prism — acceptable for stylized view)
-      addBoxWindows(g, wm, 2.8, H, 2.8, 0, H / 2, 0, 4, 10);
-      break;
-    }
-    case "gerstein":
-    case "generic":
-    default: {
-      const W = 4, H = 5, D = 4;
-      const main = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), wall);
-      main.position.y = H / 2;
-      g.add(main);
-      addBoxWindows(g, wm, W, H, D, 0, H / 2, 0, 6, 7);
-      break;
-    }
+function buildDanaPorter(wm: THREE.Material): THREE.Group {
+  const g = new THREE.Group();
+
+  // Wide low podium
+  addBox(g, wallMat(0x1a1a28), 5.5, 1.5, 5.5, 0, 0.75, 0);
+  addWindows(g, wm, 5.5, 1.5, 5.5, 0, 0.75, 0, 4, 1);
+
+  // Tall central tower
+  const tW = 3.4, tH = 11, tD = 3.4;
+  const tY = 1.5 + tH / 2;
+  addBox(g, wallMat(0x1e1e2e), tW, tH, tD, 0, tY, 0);
+
+  // Horizontal floor-plate banding
+  for (let i = 0; i <= 9; i++) {
+    addBox(g, wallMat(0x26263a), tW + 0.18, 0.08, tD + 0.18, 0, 1.5 + 1.1 * i, 0);
   }
+
+  addWindows(g, wm, tW, tH, tD, 0, tY, 0, 4, 10);
+
+  // Rooftop mechanical penthouse
+  addBox(g, wallMat(0x181826), 1.8, 0.9, 1.8, 0, 1.5 + tH + 0.45, 0);
 
   return g;
 }
 
-const CAM: Record<BuildingType, [number, number, number]> = {
-  "dana-porter": [7.0, 7.0, 11.0],
-  "davis":       [7.5, 5.0, 10.5],
-  "musagetes":   [5.0, 3.5,  8.0],
-  "robarts":     [8.0, 8.0, 12.0],
-  "gerstein":    [7.0, 5.5, 10.0],
-  "generic":     [7.0, 5.5, 10.0],
+function buildDavis(wm: THREE.Material): THREE.Group {
+  const g = new THREE.Group();
+
+  // Main block
+  const W = 7.5, H = 4.5, D = 4.2;
+  addBox(g, wallMat(0x1c1c2c), W, H, D, 0, H / 2, 0);
+  addWindows(g, wm, W, H, D, 0, H / 2, 0, 7, 4);
+
+  // Lower side wing
+  addBox(g, wallMat(0x1a1a2a), 2.5, 3.2, 2.2, -5, 1.6, 0);
+  addWindows(g, wm, 2.5, 3.2, 2.2, -5, 1.6, 0, 3, 3);
+
+  // Roof parapet / cornice
+  addBox(g, wallMat(0x222234), W + 0.3, 0.14, D + 0.3, 0, H + 0.07, 0);
+
+  return g;
+}
+
+function buildMusagetes(wm: THREE.Material): THREE.Group {
+  const g = new THREE.Group();
+
+  const W = 3.8, H = 2.6, D = 3.8;
+  addBox(g, wallMat(0x1d1d2d), W, H, D, 0, H / 2, 0);
+  addWindows(g, wm, W, H, D, 0, H / 2, 0, 4, 2);
+
+  // Wide flat roof overhang
+  addBox(g, wallMat(0x202030), W + 0.8, 0.1, D + 0.8, 0, H + 0.05, 0);
+
+  // Thin glass curtain-wall entrance strip
+  addBox(g, wallMat(0x141420), 1.4, H, 0.08, 0, H / 2, D / 2 + 0.04);
+
+  return g;
+}
+
+function buildGeneric(wm: THREE.Material): THREE.Group {
+  const g = new THREE.Group();
+
+  const W = 5.2, H = 6.5, D = 4.2;
+  addBox(g, wallMat(0x1c1c2c), W, H, D, 0, H / 2, 0);
+
+  // Side annex
+  addBox(g, wallMat(0x1a1a2a), 2.2, 3.8, 3.2, 3.6, 1.9, 0);
+  addWindows(g, wm, 2.2, 3.8, 3.2, 3.6, 1.9, 0, 2, 3);
+
+  // Horizontal ledge details
+  for (let i = 1; i <= 5; i++) {
+    addBox(g, wallMat(0x232336), W + 0.12, 0.07, D + 0.12, 0, i * 1.1, 0);
+  }
+
+  addWindows(g, wm, W, H, D, 0, H / 2, 0, 5, 6);
+
+  return g;
+}
+
+function buildStructure(type: BuildingType, wm: THREE.Material): THREE.Group {
+  switch (type) {
+    case "dana-porter": return buildDanaPorter(wm);
+    case "davis":       return buildDavis(wm);
+    case "musagetes":   return buildMusagetes(wm);
+    default:            return buildGeneric(wm);
+  }
+}
+
+// ── Camera presets ────────────────────────────────────────────────────────────
+
+const CAM_POS: Record<BuildingType, [number, number, number]> = {
+  "dana-porter": [12, 10, 12],
+  "davis":       [13,  7, 13],
+  "musagetes":   [ 9,  6,  9],
+  "generic":     [12,  8, 12],
 };
 
 const CAM_TARGET_Y: Record<BuildingType, number> = {
-  "dana-porter": 4,
-  "davis":       2,
-  "musagetes":   1,
-  "robarts":     5,
-  "gerstein":    2.5,
-  "generic":     2.5,
+  "dana-porter": 5.0,
+  "davis":       2.5,
+  "musagetes":   1.5,
+  "generic":     3.0,
 };
 
-// ── Component ────────────────────────────────────────────────────────
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function BuildingModel({ buildingType, occupancyPercent, isOpen }: Props) {
   const mountRef  = useRef<HTMLDivElement>(null);
   const winMatRef = useRef<THREE.MeshStandardMaterial | null>(null);
 
-  // Always-current refs so the scene init closure can read latest values
+  // Always-current refs so scene-init closure reads latest values
   const pctRef  = useRef(occupancyPercent);
   const openRef = useRef(isOpen);
   pctRef.current  = occupancyPercent;
   openRef.current = isOpen;
 
-  // ── Scene init — rebuilds only when building type changes ──────────
+  // ── Scene init ─ rebuilds only when buildingType changes ──────────────────
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount) return;
 
-    const w = mount.clientWidth  || 300;
-    const h = mount.clientHeight || 280;
+    const w = mount.clientWidth  || 400;
+    const h = mount.clientHeight || 320;
 
     // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(w, h);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
     mount.appendChild(renderer.domElement);
 
-    // Scene
+    // Scene + fog
     const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x020208, 0.035);
 
     // Camera
-    const [cpx, cpy, cpz] = CAM[buildingType];
-    const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
+    const [cpx, cpy, cpz] = CAM_POS[buildingType];
+    const targetY = CAM_TARGET_Y[buildingType];
+    const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000);
     camera.position.set(cpx, cpy, cpz);
-    camera.lookAt(0, CAM_TARGET_Y[buildingType], 0);
+    camera.lookAt(0, targetY, 0);
 
-    // Lights
-    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-    dirLight.position.set(-5, 8, 3);
+    // ── Lighting ────────────────────────────────────────────────────────────
+    scene.add(new THREE.AmbientLight(0x0a0a1a, 0.3));
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
+    dirLight.position.set(10, 20, 10);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width  = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.camera.near   =  0.5;
+    dirLight.shadow.camera.far    = 100;
+    dirLight.shadow.camera.left   = -20;
+    dirLight.shadow.camera.right  =  20;
+    dirLight.shadow.camera.top    =  20;
+    dirLight.shadow.camera.bottom = -20;
     scene.add(dirLight);
-    const accentLight = new THREE.PointLight(0x06b6d4, 1.8, 14);
-    accentLight.position.set(0, -0.4, 0);
-    scene.add(accentLight);
 
-    // Ground grid
-    const grid = new THREE.GridHelper(22, 22, 0x06b6d4, 0x1a1a2a);
+    // Cyan accent — front-left low
+    const cyanLight = new THREE.PointLight(0x06b6d4, 2.0, 30);
+    cyanLight.position.set(-8, 3, 8);
+    scene.add(cyanLight);
+
+    // Warm amber — back-right
+    const warmLight = new THREE.PointLight(0xf59e0b, 0.8, 25);
+    warmLight.position.set(8, 1, -8);
+    scene.add(warmLight);
+
+    scene.add(new THREE.HemisphereLight(0x1a1a3e, 0x0a0a0a, 0.5));
+
+    // ── Ground plane ────────────────────────────────────────────────────────
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(40, 40),
+      new THREE.MeshStandardMaterial({ color: 0x050508, roughness: 0.8, metalness: 0.2 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const grid = new THREE.GridHelper(30, 30, 0x06b6d4, 0x0a0a1a);
     (grid.material as THREE.Material).transparent = true;
-    (grid.material as THREE.Material).opacity = 0.55;
-    grid.position.y = -0.02;
+    (grid.material as THREE.Material).opacity = 0.4;
+    grid.position.y = 0.01;
     scene.add(grid);
 
-    // Building
-    const wp = getWinProps(pctRef.current, openRef.current);
+    // ── Building ────────────────────────────────────────────────────────────
+    const wp = winProps(pctRef.current, openRef.current);
     const wm = makeWinMat(wp.hex, wp.intensity);
     winMatRef.current = wm;
-    const building = buildBuilding(buildingType, wm);
+    const building = buildStructure(buildingType, wm);
     scene.add(building);
 
-    // ── Manual orbit ────────────────────────────────────────────────
+    // ── Manual orbit controls ───────────────────────────────────────────────
     let isDragging = false;
     let autoRotate = true;
-    let prevX = 0;
-    let prevY = 0;
+    let prevX = 0, prevY = 0;
     let resumeTimer = 0;
 
-    const pauseAndResume = () => {
+    const pauseAuto = () => {
       autoRotate = false;
       clearTimeout(resumeTimer);
-      resumeTimer = window.setTimeout(() => { autoRotate = true; }, 1400);
+      resumeTimer = window.setTimeout(() => { autoRotate = true; }, 1500);
     };
+
+    const canvas = renderer.domElement;
+    canvas.style.cursor = "grab";
 
     const onMouseDown = (e: MouseEvent) => {
       isDragging = true;
       autoRotate = false;
       clearTimeout(resumeTimer);
-      prevX = e.clientX;
-      prevY = e.clientY;
-      renderer.domElement.style.cursor = "grabbing";
+      prevX = e.clientX; prevY = e.clientY;
+      canvas.style.cursor = "grabbing";
     };
     const onMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
       const dx = e.clientX - prevX;
       const dy = e.clientY - prevY;
-      building.rotation.y += dx * 0.008;
-      building.rotation.x = Math.max(-0.42, Math.min(0.52, building.rotation.x + dy * 0.006));
-      prevX = e.clientX;
-      prevY = e.clientY;
+      building.rotation.y += dx * 0.007;
+      building.rotation.x = Math.max(-0.4, Math.min(0.5, building.rotation.x + dy * 0.005));
+      prevX = e.clientX; prevY = e.clientY;
     };
     const onMouseUp = () => {
       isDragging = false;
-      renderer.domElement.style.cursor = "grab";
-      pauseAndResume();
+      canvas.style.cursor = "grab";
+      pauseAuto();
     };
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const target = new THREE.Vector3(0, CAM_TARGET_Y[buildingType], 0);
+      const target = new THREE.Vector3(0, targetY, 0);
       const dir = new THREE.Vector3().subVectors(target, camera.position).normalize();
-      camera.position.addScaledVector(dir, e.deltaY * 0.015);
+      camera.position.addScaledVector(dir, e.deltaY * 0.02);
       const dist = camera.position.distanceTo(target);
-      if (dist < 3.5) camera.position.addScaledVector(dir, -(3.5 - dist));
-      if (dist > 30)  camera.position.addScaledVector(dir,  dist - 30);
+      if (dist < 8)  camera.position.addScaledVector(dir, -(8  - dist));
+      if (dist > 25) camera.position.addScaledVector(dir,  dist - 25);
     };
 
-    // Touch
     let prevTX = 0, prevTY = 0;
     const onTouchStart = (e: TouchEvent) => {
-      prevTX = e.touches[0].clientX;
-      prevTY = e.touches[0].clientY;
-      autoRotate = false;
-      clearTimeout(resumeTimer);
+      prevTX = e.touches[0].clientX; prevTY = e.touches[0].clientY;
+      autoRotate = false; clearTimeout(resumeTimer);
     };
     const onTouchMove = (e: TouchEvent) => {
       e.preventDefault();
       const dx = e.touches[0].clientX - prevTX;
       const dy = e.touches[0].clientY - prevTY;
-      building.rotation.y += dx * 0.009;
-      building.rotation.x = Math.max(-0.42, Math.min(0.52, building.rotation.x + dy * 0.007));
-      prevTX = e.touches[0].clientX;
-      prevTY = e.touches[0].clientY;
+      building.rotation.y += dx * 0.008;
+      building.rotation.x = Math.max(-0.4, Math.min(0.5, building.rotation.x + dy * 0.006));
+      prevTX = e.touches[0].clientX; prevTY = e.touches[0].clientY;
     };
-    const onTouchEnd = () => pauseAndResume();
+    const onTouchEnd = () => pauseAuto();
 
-    const canvas = renderer.domElement;
     canvas.addEventListener("mousedown",  onMouseDown);
     window.addEventListener("mousemove",  onMouseMove);
     window.addEventListener("mouseup",    onMouseUp);
@@ -308,7 +362,6 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen }
     canvas.addEventListener("touchmove",  onTouchMove,  { passive: false });
     canvas.addEventListener("touchend",   onTouchEnd);
 
-    // Resize
     const onResize = () => {
       const nw = mount.clientWidth;
       const nh = mount.clientHeight;
@@ -319,7 +372,7 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen }
     };
     window.addEventListener("resize", onResize);
 
-    // Animation loop
+    // ── Animation loop ──────────────────────────────────────────────────────
     let raf = 0;
     const tick = () => {
       raf = requestAnimationFrame(tick);
@@ -328,7 +381,7 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen }
     };
     tick();
 
-    // Cleanup
+    // ── Cleanup ─────────────────────────────────────────────────────────────
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(resumeTimer);
@@ -352,11 +405,11 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildingType]);
 
-  // ── Live window color updates (no scene rebuild) ───────────────────
+  // ── Live window color updates (no scene rebuild) ──────────────────────────
   useEffect(() => {
     const mat = winMatRef.current;
     if (!mat) return;
-    const wp = getWinProps(occupancyPercent, isOpen);
+    const wp = winProps(occupancyPercent, isOpen);
     mat.emissive.setHex(wp.hex);
     mat.emissiveIntensity = wp.intensity;
     mat.needsUpdate = true;
@@ -366,19 +419,19 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen }
     <div>
       <div
         ref={mountRef}
-        style={{ width: "100%", height: "280px", cursor: "grab" }}
+        style={{ width: "100%", height: "320px", cursor: "grab" }}
       />
       <p
         style={{
           textAlign: "center",
           fontSize: "11px",
           color: "var(--text-muted)",
-          marginTop: "6px",
+          marginTop: "8px",
           letterSpacing: "0.05em",
           userSelect: "none",
         }}
       >
-        Drag to rotate · Scroll to zoom
+        ⟳ Drag to explore · Scroll to zoom
       </p>
     </div>
   );

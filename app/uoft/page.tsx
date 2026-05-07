@@ -61,8 +61,8 @@ const LIBRARIES: { name: string; description: string; bookingUrl: string }[] = [
 ];
 
 const BUILDING_MAP: Record<string, BuildingType> = {
-  "Robarts Library":  "robarts",
-  "Gerstein Library": "gerstein",
+  "Robarts Library":  "generic",
+  "Gerstein Library": "generic",
 };
 
 function getBuildingType(name: string): BuildingType {
