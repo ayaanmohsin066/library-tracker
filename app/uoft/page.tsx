@@ -1,30 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import dynamic from "next/dynamic";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
+  BarChart, Bar, XAxis, Cell, Tooltip, ResponsiveContainer,
 } from "recharts";
 import Navbar from "@/components/Navbar";
-import type { BuildingType } from "@/components/BuildingModel";
 
-const BuildingModel = dynamic(
-  () => import("@/components/BuildingModel"),
-  {
-    ssr: false,
-    loading: () => (
-      <div
-        className="animate-shimmer"
-        style={{ width: "100%", height: "280px", borderRadius: "12px", backgroundColor: "var(--bg-elevated)" }}
-      />
-    ),
-  }
-);
+// ── Data ──────────────────────────────────────────────────────────────────────
 
 type DayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
@@ -48,26 +30,19 @@ const POPULAR_TIMES: Record<DayKey, number[]> = {
   sun: [0, 1, 1, 2, 2, 3, 3, 3, 4, 3, 3, 3, 2],
 };
 
-const LIBRARIES: { name: string; description: string; bookingUrl: string }[] = [
-  { name: "Robarts Library",            description: "Main research library with 14 floors of collections.",          bookingUrl: "https://libcal.library.utoronto.ca/r/search/robarts" },
-  { name: "Gerstein Library",           description: "Health sciences library open 24/7 during the semester.",        bookingUrl: "https://libcal.library.utoronto.ca/reserve/gerstein" },
-  { name: "OISE Library",               description: "Specializes in education and social work resources.",            bookingUrl: "https://libcal.library.utoronto.ca/r/search/OISE" },
-  { name: "Engineering & CS Library",   description: "Technical resources for engineering and computer science.",     bookingUrl: "https://libcal.library.utoronto.ca/reserve/engineering" },
-  { name: "University College Library", description: "Intimate reading rooms in a historic building.",                bookingUrl: "https://libcal.library.utoronto.ca/r/search/uclibrary" },
-  { name: "Chemistry Library",          description: "Specialized chemistry and materials science collection.",        bookingUrl: "https://libcal.library.utoronto.ca/reserve/chemistry" },
-  { name: "John W. Graham Library",     description: "Trinity College library with rare book holdings.",              bookingUrl: "https://libcal.library.utoronto.ca/r/search/graham" },
-  { name: "John M. Kelly Library",      description: "St. Michael's College library with theology collections.",      bookingUrl: "https://libcal.library.utoronto.ca/r/search/kelly" },
-  { name: "UTSC Library",               description: "Full-service library at the Scarborough campus.",               bookingUrl: "https://libcal.library.utoronto.ca/reserve/spaces/utsclibrary" },
+const LIBRARIES = [
+  { name: "Robarts Library",            description: "Main research library with 14 floors of collections.",         hours: "Mon–Thu 8am–10pm · Fri 8am–8pm · Sat–Sun 10am–8pm", bookingUrl: "https://libcal.library.utoronto.ca/r/search/robarts" },
+  { name: "Gerstein Library",           description: "Health sciences library open 24/7 during the semester.",        hours: "Open 24/7 during term",                                 bookingUrl: "https://libcal.library.utoronto.ca/reserve/gerstein" },
+  { name: "OISE Library",               description: "Specializes in education and social work resources.",           hours: "Mon–Fri 9am–8pm · Sat 10am–5pm",                        bookingUrl: "https://libcal.library.utoronto.ca/r/search/OISE" },
+  { name: "Engineering & CS Library",   description: "Technical resources for engineering and computer science.",    hours: "Mon–Fri 8:30am–8pm · Sat 10am–5pm",                     bookingUrl: "https://libcal.library.utoronto.ca/reserve/engineering" },
+  { name: "University College Library", description: "Intimate reading rooms in a historic building.",               hours: "Mon–Fri 9am–7pm",                                       bookingUrl: "https://libcal.library.utoronto.ca/r/search/uclibrary" },
+  { name: "Chemistry Library",          description: "Specialized chemistry and materials science collection.",       hours: "Mon–Fri 9am–5pm",                                       bookingUrl: "https://libcal.library.utoronto.ca/reserve/chemistry" },
+  { name: "John W. Graham Library",     description: "Trinity College library with rare book holdings.",             hours: "Mon–Fri 9am–6pm",                                       bookingUrl: "https://libcal.library.utoronto.ca/r/search/graham" },
+  { name: "John M. Kelly Library",      description: "St. Michael's College library with theology collections.",     hours: "Mon–Fri 9am–7pm · Sat 12pm–5pm",                        bookingUrl: "https://libcal.library.utoronto.ca/r/search/kelly" },
+  { name: "UTSC Library",               description: "Full-service library at the Scarborough campus.",              hours: "Mon–Thu 8am–10pm · Fri 8am–7pm · Sat–Sun 10am–6pm",    bookingUrl: "https://libcal.library.utoronto.ca/reserve/spaces/utsclibrary" },
 ];
 
-const BUILDING_MAP: Record<string, BuildingType> = {
-  "Robarts Library":  "generic",
-  "Gerstein Library": "generic",
-};
-
-function getBuildingType(name: string): BuildingType {
-  return BUILDING_MAP[name] ?? "generic";
-}
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 const JS_DAY_TO_KEY: DayKey[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 function todayKey(): DayKey { return JS_DAY_TO_KEY[new Date().getDay()]; }
@@ -76,73 +51,45 @@ function currentHourIndex(): number | null {
   if (h < 9 || h > 21) return null;
   return h - 9;
 }
-
-function barColor(value: number, isCurrentHour: boolean): string {
-  if (isCurrentHour) {
-    return value <= 4 ? "#059669" : value <= 7 ? "#d97706" : "#dc2626";
-  }
+function barColor(value: number, isCurrent: boolean): string {
+  if (isCurrent) return value <= 4 ? "#059669" : value <= 7 ? "#d97706" : "#dc2626";
   return value <= 4 ? "#10b981" : value <= 7 ? "#f59e0b" : "#ef4444";
 }
-
-function hourLabel(index: number): string {
-  const h = 9 + index;
+function hourLabel(i: number): string {
+  const h = 9 + i;
   if (h === 12) return "12pm";
   return h < 12 ? `${h}am` : `${h - 12}pm`;
 }
 
+// ── Chart ─────────────────────────────────────────────────────────────────────
+
 interface ChartEntry { hour: string; value: number; index: number; }
 
 function BusynessChart({ dayKey, isToday }: { dayKey: DayKey; isToday: boolean }) {
-  const values = POPULAR_TIMES[dayKey];
-  const currentIdx = isToday ? currentHourIndex() : null;
-
-  const chartData: ChartEntry[] = values.map((value, index) => ({
-    hour: hourLabel(index),
-    value,
-    index,
-  }));
+  const values   = POPULAR_TIMES[dayKey];
+  const curIdx   = isToday ? currentHourIndex() : null;
+  const chartData: ChartEntry[] = values.map((value, index) => ({ hour: hourLabel(index), value, index }));
 
   return (
     <ResponsiveContainer width="100%" height={160}>
       <BarChart data={chartData} barCategoryGap="22%">
-        <XAxis
-          dataKey="hour"
-          tick={{ fontSize: 11, fill: "#6b7280" }}
-          tickLine={false}
-          axisLine={false}
-          interval={1}
-        />
+        <XAxis dataKey="hour" tick={{ fontSize: 11, fill: "#6b7280" }} tickLine={false} axisLine={false} interval={1} />
         <Tooltip
           cursor={{ fill: "rgba(255,255,255,0.03)" }}
           content={({ active, payload }) => {
             if (!active || !payload?.length) return null;
             const { hour, value } = payload[0].payload as ChartEntry;
             return (
-              <div
-                style={{
-                  backgroundColor: "var(--bg-elevated)",
-                  border: "1px solid var(--border-strong)",
-                  color: "var(--text-primary)",
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
-                  borderRadius: "8px",
-                  padding: "6px 12px",
-                  fontSize: "12px",
-                }}
-              >
+              <div style={{ backgroundColor: "var(--bg-elevated)", border: "1px solid var(--border-strong)", color: "var(--text-primary)", boxShadow: "0 4px 16px rgba(0,0,0,0.4)", borderRadius: 8, padding: "6px 12px", fontSize: 12 }}>
                 <span style={{ fontWeight: 600 }}>{hour}</span>
-                <span style={{ marginLeft: "8px", color: "var(--text-muted)" }}>
-                  busyness {value}/10
-                </span>
+                <span style={{ marginLeft: 8, color: "var(--text-muted)" }}>busyness {value}/10</span>
               </div>
             );
           }}
         />
         <Bar dataKey="value" radius={[4, 4, 0, 0]}>
           {chartData.map((entry) => (
-            <Cell
-              key={entry.index}
-              fill={barColor(entry.value, entry.index === currentIdx)}
-            />
+            <Cell key={entry.index} fill={barColor(entry.value, entry.index === curIdx)} />
           ))}
         </Bar>
       </BarChart>
@@ -150,103 +97,50 @@ function BusynessChart({ dayKey, isToday }: { dayKey: DayKey; isToday: boolean }
   );
 }
 
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function UoftPage() {
   const today = todayKey();
   const [selectedDay, setSelectedDay] = useState<DayKey>(today);
-
-  const hourIdx = currentHourIndex();
-  const currentBusyness = POPULAR_TIMES[today][hourIdx ?? 6];
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-base)" }}>
       <Navbar />
 
-      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "88px 16px 80px" }}>
-
-        {/* ── Page header ─────────────────────────────────────────── */}
-        <div style={{ marginBottom: "32px" }}>
-          <h1
-            style={{
-              fontSize: "clamp(1.5rem, 4vw, 2.25rem)",
-              fontWeight: 800,
-              color: "var(--text-primary)",
-              letterSpacing: "-0.02em",
-              lineHeight: 1.1,
-            }}
-          >
+      {/* Hero */}
+      <section style={{ position: "relative", overflow: "hidden", padding: "88px 24px 48px" }}>
+        <div aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "radial-gradient(ellipse 70% 60% at 50% 50%, rgba(16,185,129,0.05) 0%, transparent 70%)", pointerEvents: "none" }} />
+        <div style={{ maxWidth: "1200px", margin: "0 auto", position: "relative", zIndex: 1 }}>
+          <h1 style={{ fontSize: "clamp(1.75rem, 5vw, 3rem)", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 12 }}>
             University of Toronto
           </h1>
-          <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "6px" }}>
-            Historical occupancy data
-          </p>
+          <p style={{ fontSize: 15, color: "var(--text-muted)" }}>Historical occupancy data</p>
+        </div>
+      </section>
+
+      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 16px 80px" }}>
+
+        {/* Notice */}
+        <div style={{ backgroundColor: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", color: "#f59e0b", borderRadius: 12, padding: "12px 16px", fontSize: 13, marginBottom: 24 }}>
+          Live occupancy unavailable for UofT — showing typical busy patterns based on historical data.
         </div>
 
-        {/* ── Notice banner ───────────────────────────────────────── */}
-        <div
-          style={{
-            backgroundColor: "rgba(245,158,11,0.08)",
-            border: "1px solid rgba(245,158,11,0.2)",
-            color: "#f59e0b",
-            borderRadius: "12px",
-            padding: "12px 16px",
-            fontSize: "13px",
-            marginBottom: "24px",
-          }}
-        >
-          Live occupancy data is not available for UofT. The 3D models and chart reflect
-          typical busy patterns based on historical data.
-        </div>
-
-        {/* ── Popular times ───────────────────────────────────────── */}
-        <div
-          style={{
-            backgroundColor: "var(--bg-surface)",
-            border: "1px solid var(--border)",
-            borderRadius: "20px",
-            padding: "28px",
-            marginBottom: "24px",
-          }}
-        >
-          <h2 style={{ fontSize: "15px", fontWeight: 700, color: "var(--text-primary)", marginBottom: "16px" }}>
-            Popular Times
-          </h2>
+        {/* Popular times */}
+        <div style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 20, padding: "28px", marginBottom: 32 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", marginBottom: 16 }}>Popular Times</h2>
 
           {/* Day selector */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
             {DAYS.map(({ key, label }) => {
-              const isSelected = selectedDay === key;
-              const isToday    = key === today;
+              const isSel   = selectedDay === key;
+              const isToday = key === today;
               return (
                 <button
                   key={key}
                   onClick={() => setSelectedDay(key)}
-                  style={
-                    isSelected
-                      ? {
-                          backgroundColor: "var(--accent)",
-                          color: "#fff",
-                          boxShadow: "0 0 12px var(--accent-glow)",
-                          border: "1px solid transparent",
-                          borderRadius: "999px",
-                          padding: "6px 14px",
-                          fontSize: "13px",
-                          fontWeight: 500,
-                          cursor: "pointer",
-                          minHeight: "36px",
-                        }
-                      : {
-                          backgroundColor: "var(--bg-elevated)",
-                          color: "var(--text-secondary)",
-                          border: "1px solid var(--border)",
-                          outline: isToday ? "2px solid var(--border-strong)" : undefined,
-                          outlineOffset: isToday ? "2px" : undefined,
-                          borderRadius: "999px",
-                          padding: "6px 14px",
-                          fontSize: "13px",
-                          fontWeight: 500,
-                          cursor: "pointer",
-                          minHeight: "36px",
-                        }
+                  style={isSel
+                    ? { backgroundColor: "var(--accent)", color: "#fff", boxShadow: "0 0 12px var(--accent-glow)", border: "1px solid transparent", borderRadius: 999, padding: "6px 14px", fontSize: 13, fontWeight: 500, cursor: "pointer", minHeight: 36 }
+                    : { backgroundColor: "var(--bg-elevated)", color: "var(--text-secondary)", border: "1px solid var(--border)", outline: isToday ? "2px solid var(--border-strong)" : undefined, outlineOffset: isToday ? "2px" : undefined, borderRadius: 999, padding: "6px 14px", fontSize: 13, fontWeight: 500, cursor: "pointer", minHeight: 36 }
                   }
                 >
                   {label}
@@ -257,27 +151,21 @@ export default function UoftPage() {
 
           {/* Chart */}
           <div style={{ overflowX: "auto" }}>
-            <div style={{ minWidth: "480px" }}>
+            <div style={{ minWidth: 480 }}>
               <BusynessChart dayKey={selectedDay} isToday={selectedDay === today} />
             </div>
           </div>
 
           {/* Legend */}
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "16px", marginTop: "8px", fontSize: "12px", color: "var(--text-muted)" }}>
-            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", backgroundColor: "#10b981" }} />
-              Not busy
-            </span>
-            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", backgroundColor: "#f59e0b" }} />
-              Moderate
-            </span>
-            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", backgroundColor: "#ef4444" }} />
-              Busy
-            </span>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16, marginTop: 8, fontSize: 12, color: "var(--text-muted)" }}>
+            {[["#10b981", "Not busy"], ["#f59e0b", "Moderate"], ["#ef4444", "Busy"]].map(([c, l]) => (
+              <span key={l} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", backgroundColor: c }} />
+                {l}
+              </span>
+            ))}
             {selectedDay === today && (
-              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", backgroundColor: "var(--accent)" }} />
                 Current hour
               </span>
@@ -285,68 +173,37 @@ export default function UoftPage() {
           </div>
         </div>
 
-        {/* ── Library rows ────────────────────────────────────────── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        {/* Library grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {LIBRARIES.map((lib) => (
             <div
               key={lib.name}
               style={{
                 backgroundColor: "var(--bg-surface)",
                 border: "1px solid var(--border)",
-                borderRadius: "20px",
-                padding: "28px",
-                overflow: "hidden",
+                borderRadius: 16,
+                padding: 24,
+                display: "flex",
+                flexDirection: "column",
+                gap: 0,
               }}
             >
-              <div className="flex flex-col-reverse gap-6 md:flex-row">
-                {/* Left half: static library info */}
-                <div className="md:w-1/2" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                  <div>
-                    <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-primary)", marginBottom: "6px" }}>
-                      {lib.name}
-                    </h3>
-                    <p style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                      {lib.description}
-                    </p>
-                  </div>
-                  <div style={{ marginTop: "20px" }}>
-                    <a
-                      href={lib.bookingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        backgroundColor: "var(--accent)",
-                        color: "#fff",
-                        borderRadius: "12px",
-                        padding: "8px 16px",
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        textDecoration: "none",
-                        minHeight: "40px",
-                        transition: "opacity 150ms ease",
-                      }}
-                    >
-                      Book a Room
-                      <span aria-hidden="true">→</span>
-                    </a>
-                  </div>
-                </div>
-                {/* Right half: 3D building */}
-                <div className="md:w-1/2">
-                  <BuildingModel
-                    buildingType={getBuildingType(lib.name)}
-                    occupancyPercent={currentBusyness * 10}
-                    isOpen={hourIdx !== null}
-                  />
-                </div>
-              </div>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", marginBottom: 6 }}>{lib.name}</h3>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.55, marginBottom: 8, flex: 1 }}>{lib.description}</p>
+              <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 16 }}>
+                <span style={{ marginRight: 4 }}>🕐</span>{lib.hours}
+              </p>
+              <a
+                href={lib.bookingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, backgroundColor: "var(--accent)", color: "#fff", borderRadius: 10, padding: "8px 16px", fontSize: 13, fontWeight: 600, textDecoration: "none", alignSelf: "flex-start", transition: "opacity 150ms ease" }}
+              >
+                Book a Room <span aria-hidden="true">→</span>
+              </a>
             </div>
           ))}
         </div>
-
       </div>
     </div>
   );

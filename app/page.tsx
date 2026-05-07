@@ -1,11 +1,22 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
 
 // ── Particle canvas hook ────────────────────────────────────────────
 function useParticleCanvas(canvasRef: React.RefObject<HTMLCanvasElement>) {
+  const mouseRef = useRef({ x: -9999, y: -9999 });
+
+  const onMouseMove = useCallback((e: MouseEvent) => {
+    mouseRef.current = { x: e.clientX, y: e.clientY };
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("mousemove", onMouseMove);
+    return () => window.removeEventListener("mousemove", onMouseMove);
+  }, [onMouseMove]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -13,50 +24,81 @@ function useParticleCanvas(canvasRef: React.RefObject<HTMLCanvasElement>) {
     if (!ctx) return;
 
     const resize = () => {
-      canvas.width = window.innerWidth;
+      canvas.width  = window.innerWidth;
       canvas.height = window.innerHeight;
     };
     resize();
     window.addEventListener("resize", resize);
 
-    const COUNT = 80;
-    const CONNECT = 130;
+    const COUNT        = 200;
+    const CONNECT      = 120;
+    const REPEL_R      = 80;
+    const REPEL_FORCE  = 0.28;
+    const MAX_SPEED    = 2.2;
 
-    type Particle = { x: number; y: number; vx: number; vy: number; r: number };
-    const pts: Particle[] = Array.from({ length: COUNT }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.45,
-      vy: (Math.random() - 0.5) * 0.45,
-      r: Math.random() * 1.4 + 0.7,
-    }));
+    // 70 % white/gray · 20 % cyan · 10 % purple
+    const PALETTE = ["255,255,255", "6,182,212", "129,140,248"];
+    const SPEEDS  = [0.28, 0.5, 0.82]; // slow / medium / fast tiers
+
+    type Particle = { x: number; y: number; vx: number; vy: number; r: number; rgb: string };
+    const pts: Particle[] = Array.from({ length: COUNT }, (_, i) => {
+      const rng  = Math.random();
+      const rgb  = rng < 0.7 ? PALETTE[0] : rng < 0.9 ? PALETTE[1] : PALETTE[2];
+      const spd  = SPEEDS[i % 3];
+      const ang  = Math.random() * Math.PI * 2;
+      return {
+        x:  Math.random() * (canvas.width  || 1200),
+        y:  Math.random() * (canvas.height || 800),
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd,
+        r:  1 + Math.random() * 2,   // 1–3 px radius
+        rgb,
+      };
+    });
 
     let raf = 0;
 
     const tick = () => {
-      const w = canvas.width;
-      const h = canvas.height;
+      const w  = canvas.width;
+      const h  = canvas.height;
+      const mx = mouseRef.current.x;
+      const my = mouseRef.current.y;
       ctx.clearRect(0, 0, w, h);
 
       for (const p of pts) {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < 0 || p.x > w) p.vx *= -1;
-        if (p.y < 0 || p.y > h) p.vy *= -1;
+        // Mouse repulsion
+        const dx   = p.x - mx;
+        const dy   = p.y - my;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < REPEL_R && dist > 0) {
+          const f = (1 - dist / REPEL_R) * REPEL_FORCE;
+          p.vx += (dx / dist) * f;
+          p.vy += (dy / dist) * f;
+        }
+
+        // Speed cap
+        const spd = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+        if (spd > MAX_SPEED) { p.vx = (p.vx / spd) * MAX_SPEED; p.vy = (p.vy / spd) * MAX_SPEED; }
+        // Gentle speed floor so particles don't stop
+        if (spd < 0.08) { const a = Math.random() * Math.PI * 2; p.vx += Math.cos(a) * 0.1; p.vy += Math.sin(a) * 0.1; }
+
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > w) { p.vx *= -1; p.x = Math.max(0, Math.min(w, p.x)); }
+        if (p.y < 0 || p.y > h) { p.vy *= -1; p.y = Math.max(0, Math.min(h, p.y)); }
       }
 
-      // Connections first (drawn behind dots)
+      // Connection lines
       for (let i = 0; i < pts.length; i++) {
         for (let j = i + 1; j < pts.length; j++) {
-          const dx = pts[i].x - pts[j].x;
-          const dy = pts[i].y - pts[j].y;
+          const dx   = pts[i].x - pts[j].x;
+          const dy   = pts[i].y - pts[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < CONNECT) {
             ctx.beginPath();
             ctx.moveTo(pts[i].x, pts[i].y);
             ctx.lineTo(pts[j].x, pts[j].y);
-            ctx.strokeStyle = `rgba(255,255,255,${(1 - dist / CONNECT) * 0.22})`;
-            ctx.lineWidth = 0.6;
+            ctx.strokeStyle = `rgba(255,255,255,${(1 - dist / CONNECT) * 0.16})`;
+            ctx.lineWidth   = 0.5;
             ctx.stroke();
           }
         }
@@ -66,7 +108,7 @@ function useParticleCanvas(canvasRef: React.RefObject<HTMLCanvasElement>) {
       for (const p of pts) {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255,0.65)";
+        ctx.fillStyle = `rgba(${p.rgb},0.62)`;
         ctx.fill();
       }
 

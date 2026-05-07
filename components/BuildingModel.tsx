@@ -9,6 +9,7 @@ interface Props {
   buildingType: BuildingType;
   occupancyPercent: number;
   isOpen: boolean;
+  label?: string;
 }
 
 // ── Materials ─────────────────────────────────────────────────────────────────
@@ -365,7 +366,7 @@ const CAM_TARGET_Y: Record<BuildingType, number> = {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function BuildingModel({ buildingType, occupancyPercent, isOpen }: Props) {
+export default function BuildingModel({ buildingType, occupancyPercent, isOpen, label }: Props) {
   const mountRef   = useRef<HTMLDivElement>(null);
   const winMatsRef = useRef<THREE.MeshStandardMaterial[]>([]);
 
@@ -451,6 +452,22 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen }
     winMatsRef.current = winMats;
     scene.add(building);
 
+    // Floating dust particles
+    const pGeo = new THREE.SphereGeometry(0.03, 4, 4);
+    const pMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
+    type PD = { mesh: THREE.Mesh; vx: number; vy: number; vz: number };
+    const particles: PD[] = [];
+    for (let i = 0; i < 60; i++) {
+      const m = new THREE.Mesh(pGeo, pMat);
+      const r     = Math.cbrt(Math.random()) * 10;
+      const theta = Math.random() * Math.PI * 2;
+      const phi   = Math.acos(2 * Math.random() - 1);
+      m.position.set(r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta));
+      const spd = 0.005 + Math.random() * 0.012;
+      particles.push({ mesh: m, vx: (Math.random() - 0.5) * 0.003, vy: spd, vz: (Math.random() - 0.5) * 0.003 });
+      scene.add(m);
+    }
+
     // Orbit controls
     let isDragging = false;
     let autoRotate = true;
@@ -529,6 +546,18 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen }
 
       if (autoRotate) building.rotation.y += 0.003;
 
+      // Drift particles upward, reset when too high
+      for (const p of particles) {
+        p.mesh.position.x += p.vx;
+        p.mesh.position.y += p.vy;
+        p.mesh.position.z += p.vz;
+        if (p.mesh.position.y > 10) {
+          const a = Math.random() * Math.PI * 2;
+          const r = Math.random() * 8;
+          p.mesh.position.set(Math.cos(a) * r, -8 + Math.random() * 2, Math.sin(a) * r);
+        }
+      }
+
       // Pulse: trigger every 3 s when open, dana-porter only
       if (buildingType === "dana-porter" && openRef.current && winMeshes.length > 0) {
         const now = performance.now();
@@ -589,13 +618,13 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen }
   }, [occupancyPercent, isOpen]);
 
   return (
-    <div>
-      <div ref={mountRef} style={{ width: "100%", height: "320px", cursor: "grab" }} />
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: "280px" }}>
+      <div ref={mountRef} style={{ width: "100%", flex: 1, minHeight: 0, cursor: "grab" }} />
       <p style={{
         textAlign: "center", fontSize: "11px", color: "var(--text-muted)",
-        marginTop: "8px", letterSpacing: "0.05em", userSelect: "none",
+        marginTop: "6px", paddingBottom: "4px", letterSpacing: "0.05em", userSelect: "none", flexShrink: 0,
       }}>
-        ⟳ Drag to explore · Scroll to zoom
+        {label ? `${label} · ` : ""}⟳ Drag to explore · Scroll to zoom
       </p>
     </div>
   );
