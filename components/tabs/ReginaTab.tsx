@@ -23,7 +23,8 @@ export default function ReginaTab() {
     return <ErrorBanner onRetry={refetch} />;
   }
 
-  const libraries = (data?.live ?? []).map((loc) => ({
+  const raw = Array.isArray(data?.live) ? data.live : [];
+  const libraries = raw.map((loc) => ({
     name: loc.name,
     percentage: loc.percentage,
     people: loc.people,

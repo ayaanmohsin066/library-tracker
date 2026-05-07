@@ -38,7 +38,10 @@ export default function useLibraryData(uni: Uni) {
         fetch(`/api/live?uni=${uni}`).then((res) => {
           if (!res.ok) throw new Error("fetch_failed");
           return res.json();
-        }),
+        }).then((json) => ({
+          live: Array.isArray(json?.live) ? json.live : [],
+          compare: json?.compare ?? {},
+        })),
       refetchInterval: 300_000,
       staleTime: 300_000,
       gcTime: 600_000,

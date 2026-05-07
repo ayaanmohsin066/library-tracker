@@ -54,8 +54,12 @@ export async function GET(request: NextRequest) {
     const [liveJson, compareJson]: [WaitzLiveResponse, WaitzCompareResponse] =
       await Promise.all([liveRes.json(), compareRes.json()]);
 
+    // Defensive: always return live as an array, never undefined/null
+    const liveData = Array.isArray(liveJson?.data) ? liveJson.data : [];
+    const compareData = compareJson?.data ?? {};
+
     return NextResponse.json(
-      { live: liveJson.data, compare: compareJson.data },
+      { live: liveData, compare: compareData },
       { headers: { "Cache-Control": "s-maxage=300, stale-while-revalidate=60" } }
     );
   } catch {

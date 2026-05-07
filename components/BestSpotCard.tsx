@@ -18,7 +18,8 @@ interface BestSpotCardProps {
 }
 
 export default function BestSpotCard({ libraries }: BestSpotCardProps) {
-  const openLibraries = libraries.filter((l) => l.isOpen);
+  const safeLibraries = Array.isArray(libraries) ? libraries : [];
+  const openLibraries = safeLibraries.filter((l) => l.isOpen);
 
   if (openLibraries.length === 0) {
     return (
@@ -39,7 +40,7 @@ export default function BestSpotCard({ libraries }: BestSpotCardProps) {
     a.percentage <= b.percentage ? a : b
   );
 
-  const bestFloor = best.subLocs
+  const bestFloor = (best.subLocs ?? [])
     .filter((s) => s.isOpen)
     .reduce<SubLocation | null>(
       (lowest, s) =>
