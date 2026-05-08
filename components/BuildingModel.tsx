@@ -16,7 +16,7 @@ interface Props {
 
 function makeConcrete() {
   return new THREE.MeshStandardMaterial({
-    color: 0x2c2c38,
+    color: 0x8a8a9a,
     roughness: 0.85,
     metalness: 0.05,
     envMapIntensity: 0.5,
@@ -25,7 +25,7 @@ function makeConcrete() {
 
 function makeDarkConcrete() {
   return new THREE.MeshStandardMaterial({
-    color: 0x1a1a24,
+    color: 0x5a5a6a,
     roughness: 0.85,
     metalness: 0.05,
     envMapIntensity: 0.5,
@@ -41,8 +41,8 @@ function winColor(pct: number): number {
 function makeWindowMat(pct: number, open: boolean): THREE.MeshStandardMaterial {
   return new THREE.MeshStandardMaterial({
     color: 0x0a0a14,
-    emissive: new THREE.Color(winColor(pct)),
-    emissiveIntensity: open ? 0.7 : 0.05,
+    emissive: new THREE.Color(open ? winColor(pct) : 0x1a3a5a),
+    emissiveIntensity: open ? 1.5 : 0.4,
     roughness: 0.1,
     metalness: 0.9,
     transparent: true,
@@ -112,33 +112,33 @@ function buildDanaPorter(
   const dark     = makeDarkConcrete();
 
   // 1. BASE SLAB
-  box(g, concrete, 7, 0.8, 7, 0, 0.4, 0);
+  box(g, concrete, 5.5, 1, 5.5, 0, 0.5, 0);
 
   // 2. MAIN TOWER
-  const tW = 4.5, tH = 11, tD = 4.5, tY = 6.4;
+  const tW = 3.5, tH = 12, tD = 3.5, tY = 7.0;
   box(g, concrete, tW, tH, tD, 0, tY, 0);
 
   const halfW = tW / 2, halfD = tD / 2;
 
-  // 3. VERTICAL CONCRETE FINS — 8 per face, 32 total
-  for (let i = 0; i < 8; i++) {
-    const tx = -halfW + tW * (i + 0.5) / 8;
-    const tz = -halfD + tD * (i + 0.5) / 8;
+  // 3. VERTICAL CONCRETE FINS — 5 per face, 20 total
+  for (let i = 0; i < 5; i++) {
+    const tx = -halfW + tW * (i + 0.5) / 5;
+    const tz = -halfD + tD * (i + 0.5) / 5;
 
     // Front / Back: fin width along X, depth proud in Z
-    const fbGeo = new THREE.BoxGeometry(0.12, 11.2, 0.15);
+    const fbGeo = new THREE.BoxGeometry(0.12, 12.2, 0.15);
     const ff = new THREE.Mesh(fbGeo, dark); ff.position.set(tx, tY,  halfD + 0.075); ff.castShadow = true; g.add(ff);
     const fb = new THREE.Mesh(fbGeo.clone(), dark); fb.position.set(tx, tY, -halfD - 0.075); fb.castShadow = true; g.add(fb);
 
     // Right / Left: fin width along Z, depth proud in X
-    const rlGeo = new THREE.BoxGeometry(0.15, 11.2, 0.12);
+    const rlGeo = new THREE.BoxGeometry(0.15, 12.2, 0.12);
     const fr = new THREE.Mesh(rlGeo, dark); fr.position.set( halfW + 0.075, tY, tz);  fr.castShadow = true; g.add(fr);
     const fl = new THREE.Mesh(rlGeo.clone(), dark); fl.position.set(-halfW - 0.075, tY, -tz); fl.castShadow = true; g.add(fl);
   }
 
   // 4. WINDOW GRID — 4 cols × 8 rows per face, individual materials for pulse
   const COLS = 4, ROWS = 8;
-  const wW = 0.45, wH = 0.65, wD = 0.05, EPS = 0.01;
+  const wW = 0.55, wH = 0.75, wD = 0.08, EPS = 0.01;
   const colX = Array.from({ length: COLS }, (_, i) => -halfW + tW * (i + 1) / (COLS + 1));
   const colZ = Array.from({ length: COLS }, (_, i) => -halfD + tD * (i + 1) / (COLS + 1));
   const rowY  = Array.from({ length: ROWS }, (_, i) => tY - tH / 2 + tH * (i + 1) / (ROWS + 1));
@@ -170,7 +170,7 @@ function buildDanaPorter(
   box(g, dark, 0.3, 1.5,  0.3, 0, roofY + 0.25 + 0.75, 0);
 
   // 6. BASE ENTRANCE CANOPY
-  box(g, dark, 2, 1.6, 0.2, 0, 1.2, 3.6);
+  box(g, dark, 2, 1.6, 0.2, 0, 1.2, 2.9);
 
   return g;
 }
@@ -199,12 +199,12 @@ function buildDavis(pct: number, open: boolean, winMats: THREE.MeshStandardMater
   const aW = 3, aH = 5.2, aD = 5.2;
   box(g, atriumMat, aW, aH, aD, mW / 2 + aW / 2, aH / 2, 0);
 
-  // 3. VERTICAL FINS — 6 per face on main body
+  // 3. VERTICAL FINS — 5 per face on main body
   const finH = 5.3;
   const halfW = mW / 2, halfD = mD / 2;
-  for (let i = 0; i < 6; i++) {
-    const tx = -halfW + mW * (i + 0.5) / 6;
-    const tz = -halfD + mD * (i + 0.5) / 6;
+  for (let i = 0; i < 5; i++) {
+    const tx = -halfW + mW * (i + 0.5) / 5;
+    const tz = -halfD + mD * (i + 0.5) / 5;
 
     // Front (+z)
     const ffGeo = new THREE.BoxGeometry(0.12, finH, 0.15);
@@ -351,17 +351,17 @@ function buildStructure(
 // ── Camera presets ────────────────────────────────────────────────────────────
 
 const CAM_POS: Record<BuildingType, [number, number, number]> = {
-  "dana-porter": [12, 10, 12],
-  "davis":       [13,  7, 13],
-  "musagetes":   [ 9,  6,  9],
-  "generic":     [12,  8, 12],
+  "dana-porter": [10, 6, 14],
+  "davis":       [10, 6, 14],
+  "musagetes":   [10, 6, 14],
+  "generic":     [10, 6, 14],
 };
 
 const CAM_TARGET_Y: Record<BuildingType, number> = {
-  "dana-porter": 5.0,
-  "davis":       2.5,
-  "musagetes":   1.5,
-  "generic":     3.0,
+  "dana-porter": 4.0,
+  "davis":       4.0,
+  "musagetes":   4.0,
+  "generic":     4.0,
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -390,12 +390,11 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen, 
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 2.0;
     mount.appendChild(renderer.domElement);
 
-    // Scene + fog
+    // Scene
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x020208, 0.035);
 
     // Camera
     const [cpx, cpy, cpz] = CAM_POS[buildingType];
@@ -405,10 +404,10 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen, 
     camera.lookAt(0, targetY, 0);
 
     // Lights
-    scene.add(new THREE.AmbientLight(0x0a0a1a, 0.3));
+    scene.add(new THREE.AmbientLight(0xffffff, 1.5));
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
-    dirLight.position.set(10, 20, 10);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 3.0);
+    dirLight.position.set(5, 10, 5);
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width  = 2048;
     dirLight.shadow.mapSize.height = 2048;
@@ -420,13 +419,9 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen, 
     dirLight.shadow.camera.bottom = -20;
     scene.add(dirLight);
 
-    const cyanLight = new THREE.PointLight(0x06b6d4, 2.0, 30);
-    cyanLight.position.set(-8, 3, 8);
-    scene.add(cyanLight);
-
-    const warmLight = new THREE.PointLight(0xf59e0b, 0.8, 25);
-    warmLight.position.set(8, 1, -8);
-    scene.add(warmLight);
+    const fillLight = new THREE.PointLight(0xffffff, 2.0);
+    fillLight.position.set(0, 15, 10);
+    scene.add(fillLight);
 
     scene.add(new THREE.HemisphereLight(0x1a1a3e, 0x0a0a0a, 0.5));
 
@@ -570,11 +565,11 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen, 
           }
         }
 
-        const base = openRef.current ? 0.7 : 0.05;
+        const base = openRef.current ? 1.5 : 0.4;
         pulsing = pulsing.filter(({ mat, startMs }) => {
           const t = (performance.now() - startMs) / 800; // 0.8 s
           if (t >= 1) { mat.emissiveIntensity = base; return false; }
-          mat.emissiveIntensity = base + Math.sin(t * Math.PI) * 0.5; // 0.7 → 1.2 → 0.7
+          mat.emissiveIntensity = base + Math.sin(t * Math.PI) * 0.5; // 1.5 → 2.0 → 1.5
           return true;
         });
       }
@@ -608,10 +603,9 @@ export default function BuildingModel({ buildingType, occupancyPercent, isOpen, 
 
   // ── Live window color / intensity update ──────────────────────────────────
   useEffect(() => {
-    const hex   = winColor(occupancyPercent);
-    const intensity = isOpen ? 0.7 : 0.05;
+    const intensity = isOpen ? 1.5 : 0.4;
     for (const mat of winMatsRef.current) {
-      mat.emissive.setHex(hex);
+      mat.emissive.setHex(isOpen ? winColor(occupancyPercent) : 0x1a3a5a);
       mat.emissiveIntensity = intensity;
       mat.needsUpdate = true;
     }
