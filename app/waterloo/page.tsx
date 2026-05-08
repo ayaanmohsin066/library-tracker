@@ -5,26 +5,13 @@ import Navbar from "@/components/Navbar";
 import BestSpotCard from "@/components/BestSpotCard";
 import { SkeletonCard, ErrorBanner, StaleBanner } from "@/components/tabs/shared";
 import useLibraryData from "@/hooks/useLibraryData";
-import type { BuildingType } from "@/components/BuildingModel";
 
-const BuildingModel = dynamic(() => import("@/components/BuildingModel"), {
-  ssr: false,
-  loading: () => <div style={{ width: "100%", height: "100%" }} />,
-});
+const Spline = dynamic(() => import("@splinetool/react-spline"), { ssr: false });
 
 const WireframeCube = dynamic(() => import("@/components/WireframeCube"), {
   ssr: false,
   loading: () => <div className="animate-shimmer" style={{ width: "100%", height: "100%", borderRadius: "12px" }} />,
 });
-
-const BUILDING_MAP: Record<string, BuildingType> = {
-  "Dana Porter Library":            "dana-porter",
-  "Davis Library":                  "davis",
-  "Musagetes Architecture Library": "musagetes",
-};
-function getBuildingType(name: string): BuildingType {
-  return BUILDING_MAP[name] ?? "generic";
-}
 
 function occColor(pct: number): string {
   if (pct >= 80) return "#ef4444";
@@ -112,12 +99,9 @@ function LibraryRow({ lib }: { lib: LibRow }) {
             boxShadow: "inset 0 0 40px rgba(6,182,212,0.04)",
           }}
         >
-          <BuildingModel
-            buildingType={getBuildingType(lib.name)}
-            occupancyPercent={pct}
-            isOpen={lib.isOpen}
-            label={lib.name}
-          />
+          <div style={{ width: "100%", height: "100%" }}>
+            <Spline scene="https://prod.spline.design/QTywC7dN0ox5Yx3T/scene.splinecode" />
+          </div>
         </div>
 
         {/* ── Vertical separator (desktop only) ── */}
