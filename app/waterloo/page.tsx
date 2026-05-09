@@ -6,7 +6,7 @@ import BestSpotCard from "@/components/BestSpotCard";
 import { SkeletonCard, ErrorBanner, StaleBanner } from "@/components/tabs/shared";
 import useLibraryData from "@/hooks/useLibraryData";
 
-const Spline = dynamic(() => import("@splinetool/react-spline"), { ssr: false });
+const Spline = dynamic(() => import("@splinetool/react-spline/next"), { ssr: false });
 
 const WireframeCube = dynamic(() => import("@/components/WireframeCube"), {
   ssr: false,

@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["@splinetool/react-spline", "@splinetool/runtime"],
+  transpilePackages: ["@splinetool/runtime"],
+  webpack: (config) => {
+    config.resolve.conditionNames = ["import", "require", "node", "default"];
+    return config;
+  },
 };
 
 export default nextConfig;
