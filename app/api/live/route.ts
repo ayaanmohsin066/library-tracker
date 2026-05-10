@@ -1,5 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
-
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 export interface WaitzSubLocation {
@@ -16,65 +15,48 @@ export interface WaitzLocation extends WaitzSubLocation {
   subLocs: WaitzSubLocation[];
 }
 
-interface WaitzLiveResponse {
-  data: WaitzLocation[];
+const SUPPORTED_UNIS = new Set(["waterloo", "regina"]);
+
+const WAITZ_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Referer": "https://waitz.io/",
+  "Accept": "application/json, text/plain, */*",
+  "Accept-Language": "en-US,en;q=0.9",
+};
+
+function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+  });
 }
 
-interface WaitzCompareResponse {
-  data: Record<string, unknown>;
-}
+export async function GET(request: Request) {
+  const uni = new URL(request.url).searchParams.get("uni");
 
-type SupportedUni = "waterloo" | "regina";
-
-const SUPPORTED_UNIS = new Set<SupportedUni>(["waterloo", "regina"]);
-
-export async function GET(request: NextRequest) {
-  const uni = request.nextUrl.searchParams.get("uni");
-
-  if (!uni || !SUPPORTED_UNIS.has(uni as SupportedUni)) {
-    return NextResponse.json(
-      { error: "invalid_uni", cached: false },
-      { status: 400 }
-    );
+  if (!uni || !SUPPORTED_UNIS.has(uni)) {
+    return json({ error: "invalid_uni" }, 400);
   }
-
-  const WAITZ_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Referer": "https://waitz.io/",
-    "Accept": "application/json, text/plain, */*",
-  };
 
   try {
     const [liveRes, compareRes] = await Promise.all([
-      fetch(`https://waitz.io/live/${uni}`,    { headers: WAITZ_HEADERS, cache: "no-store" }),
-      fetch(`https://waitz.io/compare/${uni}`, { headers: WAITZ_HEADERS, cache: "no-store" }),
+      fetch(`https://waitz.io/live/${uni}`,    { headers: WAITZ_HEADERS }),
+      fetch(`https://waitz.io/compare/${uni}`, { headers: WAITZ_HEADERS }),
     ]);
 
     if (!liveRes.ok || !compareRes.ok) {
-      const liveBody    = !liveRes.ok    ? await liveRes.text().catch(() => "(unreadable)")    : null;
-      const compareBody = !compareRes.ok ? await compareRes.text().catch(() => "(unreadable)") : null;
-      if (liveBody    !== null) console.error(`[live] waitz live ${liveRes.status} for ${uni}:`,    liveBody);
-      if (compareBody !== null) console.error(`[live] waitz compare ${compareRes.status} for ${uni}:`, compareBody);
-      return NextResponse.json(
-        { error: "fetch_failed", cached: false },
-        { status: 500 }
-      );
+      if (!liveRes.ok)    console.error(`[live] waitz live ${liveRes.status} for ${uni}`);
+      if (!compareRes.ok) console.error(`[live] waitz compare ${compareRes.status} for ${uni}`);
+      return json({ error: "fetch_failed" }, 500);
     }
 
-    const [liveJson, compareJson]: [WaitzLiveResponse, WaitzCompareResponse] =
-      await Promise.all([liveRes.json(), compareRes.json()]);
-
-    const liveData = Array.isArray(liveJson?.data) ? liveJson.data : [];
+    const [liveJson, compareJson] = await Promise.all([liveRes.json(), compareRes.json()]);
+    const liveData    = Array.isArray(liveJson?.data) ? liveJson.data : [];
     const compareData = compareJson?.data ?? {};
 
-    return NextResponse.json(
-      { live: liveData, compare: compareData },
-      { headers: { "Cache-Control": "no-store" } }
-    );
-  } catch {
-    return NextResponse.json(
-      { error: "fetch_failed", cached: false },
-      { status: 500 }
-    );
+    return json({ live: liveData, compare: compareData });
+  } catch (err) {
+    console.error(`[live] fetch error for ${uni}:`, String(err));
+    return json({ error: "fetch_failed" }, 500);
   }
 }

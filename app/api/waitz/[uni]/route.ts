@@ -1,42 +1,43 @@
-import { NextRequest, NextResponse } from "next/server";
-
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 const SUPPORTED_UNIS = new Set(["waterloo", "regina"]);
 
+const WAITZ_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Referer": "https://waitz.io/",
+  "Accept": "application/json, text/plain, */*",
+  "Accept-Language": "en-US,en;q=0.9",
+};
+
+function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+  });
+}
+
 export async function GET(
-  _req: NextRequest,
+  _req: Request,
   { params }: { params: { uni: string } }
 ) {
   const { uni } = params;
 
   if (!SUPPORTED_UNIS.has(uni)) {
-    return NextResponse.json({ error: "invalid_uni" }, { status: 400 });
+    return json({ error: "invalid_uni" }, 400);
   }
 
   try {
-    const res = await fetch(`https://waitz.io/live/${uni}`, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        "Referer": "https://waitz.io/",
-        "Accept": "application/json, text/plain, */*",
-      },
-      cache: "no-store",
-    });
+    const res = await fetch(`https://waitz.io/live/${uni}`, { headers: WAITZ_HEADERS });
     if (!res.ok) {
       const body = await res.text().catch(() => "(unreadable)");
       console.error(`[waitz proxy] upstream ${res.status} for ${uni}:`, body);
-      return NextResponse.json(
-        { error: "upstream_error", status: res.status },
-        { status: 502 }
-      );
+      return json({ error: "upstream_error", status: res.status }, 502);
     }
-    const json = await res.json();
-    return NextResponse.json(json, {
-      headers: { "Cache-Control": "no-store" },
-    });
+    const data = await res.json();
+    return json(data);
   } catch (err) {
-    console.error(`[waitz proxy] fetch failed for ${uni}:`, err);
-    return NextResponse.json({ error: "fetch_failed" }, { status: 500 });
+    console.error(`[waitz proxy] fetch failed for ${uni}:`, String(err));
+    return json({ error: "fetch_failed" }, 500);
   }
 }
