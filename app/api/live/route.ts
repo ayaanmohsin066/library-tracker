@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export interface WaitzSubLocation {
   name: string;
@@ -38,10 +38,12 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const base = request.nextUrl.origin;
+
   try {
     const [liveRes, compareRes] = await Promise.all([
-      fetch(`https://waitz.io/live/${uni}`, { next: { revalidate: 300 } }),
-      fetch(`https://waitz.io/compare/${uni}`, { next: { revalidate: 300 } }),
+      fetch(`${base}/api/waitz/${uni}`, { cache: "no-store" }),
+      fetch(`https://waitz.io/compare/${uni}`, { cache: "no-store" }),
     ]);
 
     if (!liveRes.ok || !compareRes.ok) {
@@ -54,13 +56,12 @@ export async function GET(request: NextRequest) {
     const [liveJson, compareJson]: [WaitzLiveResponse, WaitzCompareResponse] =
       await Promise.all([liveRes.json(), compareRes.json()]);
 
-    // Defensive: always return live as an array, never undefined/null
     const liveData = Array.isArray(liveJson?.data) ? liveJson.data : [];
     const compareData = compareJson?.data ?? {};
 
     return NextResponse.json(
       { live: liveData, compare: compareData },
-      { headers: { "Cache-Control": "s-maxage=300, stale-while-revalidate=60" } }
+      { headers: { "Cache-Control": "no-store" } }
     );
   } catch {
     return NextResponse.json(
