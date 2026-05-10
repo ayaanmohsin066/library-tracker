@@ -43,10 +43,21 @@ export async function GET(request: NextRequest) {
   try {
     const [liveRes, compareRes] = await Promise.all([
       fetch(`${base}/api/waitz/${uni}`, { cache: "no-store" }),
-      fetch(`https://waitz.io/compare/${uni}`, { cache: "no-store" }),
+      fetch(`https://waitz.io/compare/${uni}`, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "Referer": "https://waitz.io/",
+          "Accept": "application/json, text/plain, */*",
+        },
+        cache: "no-store",
+      }),
     ]);
 
     if (!liveRes.ok || !compareRes.ok) {
+      const liveBody    = !liveRes.ok    ? await liveRes.text().catch(() => "(unreadable)")    : null;
+      const compareBody = !compareRes.ok ? await compareRes.text().catch(() => "(unreadable)") : null;
+      if (liveBody    !== null) console.error(`[live] waitz live ${liveRes.status} for ${uni}:`,    liveBody);
+      if (compareBody !== null) console.error(`[live] waitz compare ${compareRes.status} for ${uni}:`, compareBody);
       return NextResponse.json(
         { error: "fetch_failed", cached: false },
         { status: 500 }

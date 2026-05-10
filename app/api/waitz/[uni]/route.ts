@@ -15,8 +15,17 @@ export async function GET(
   }
 
   try {
-    const res = await fetch(`https://waitz.io/live/${uni}`, { cache: "no-store" });
+    const res = await fetch(`https://waitz.io/live/${uni}`, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Referer": "https://waitz.io/",
+        "Accept": "application/json, text/plain, */*",
+      },
+      cache: "no-store",
+    });
     if (!res.ok) {
+      const body = await res.text().catch(() => "(unreadable)");
+      console.error(`[waitz proxy] upstream ${res.status} for ${uni}:`, body);
       return NextResponse.json(
         { error: "upstream_error", status: res.status },
         { status: 502 }
