@@ -1,20 +1,12 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Navbar from "@/components/Navbar";
 import BestSpotCard from "@/components/BestSpotCard";
 import { SkeletonCard, ErrorBanner, StaleBanner } from "@/components/tabs/shared";
 import useLibraryData from "@/hooks/useLibraryData";
+import OccupancyHistory from "@/components/OccupancyHistory";
+import NotifyButton from "@/components/NotifyButton";
 
-const BuildingModel = dynamic(() => import("@/components/BuildingModel"), {
-  ssr: false,
-  loading: () => <div style={{ width: "100%", height: "100%" }} />,
-});
-
-const WireframeCube = dynamic(() => import("@/components/WireframeCube"), {
-  ssr: false,
-  loading: () => <div className="animate-shimmer" style={{ width: "100%", height: "100%", borderRadius: "12px" }} />,
-});
 
 function occColor(pct: number): string {
   if (pct >= 80) return "#ef4444";
@@ -30,13 +22,8 @@ function occBarClass(pct: number): string {
 function LoadingRow() {
   return (
     <div style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "20px", overflow: "hidden" }}>
-      <div className="flex flex-col md:flex-row" style={{ minHeight: "500px" }}>
-        <div className="md:order-2 h-[280px] md:h-auto" style={{ flex: "0 0 55%", backgroundColor: "var(--bg-elevated)" }}>
-          <WireframeCube />
-        </div>
-        <div className="md:order-1" style={{ flex: "0 0 45%", padding: "36px 40px", borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          <SkeletonCard />
-        </div>
+      <div style={{ padding: "36px 40px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <SkeletonCard />
       </div>
     </div>
   );
@@ -59,24 +46,17 @@ function LibraryRow({ lib }: { lib: LibRow }) {
 
   return (
     <div style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "20px", overflow: "hidden" }}>
-      <div className="flex flex-col md:flex-row" style={{ minHeight: "500px" }}>
-
-        {/* 3D model — first in DOM = top on mobile */}
-        <div
-          className="md:order-2 h-[280px] md:h-auto"
-          style={{ flex: "0 0 55%", position: "relative", backgroundColor: "var(--bg-elevated)", boxShadow: "inset 0 0 40px rgba(6,182,212,0.04)" }}
-        >
-          <BuildingModel buildingType="generic" occupancyPercent={pct} isOpen={lib.isOpen} label={lib.name} />
-        </div>
-
-        {/* Separator */}
-        <div className="md:order-15 hidden md:block" style={{ width: 1, flexShrink: 0, background: "linear-gradient(to bottom, transparent, var(--border) 20%, var(--border) 80%, transparent)" }} />
+      <div>
 
         {/* Info panel */}
-        <div className="md:order-1" style={{ flex: "0 0 45%", padding: "36px 40px", display: "flex", flexDirection: "column" }}>
-          <h2 style={{ fontSize: "clamp(1.2rem, 2.5vw, 1.55rem)", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
-            {lib.name}
-          </h2>
+        <div className="px-6 py-9 md:px-10" style={{ display: "flex", flexDirection: "column" }}>
+          {/* Name + notification bell */}
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+            <h2 style={{ fontSize: "clamp(1.2rem, 2.5vw, 1.55rem)", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+              {lib.name}
+            </h2>
+            <NotifyButton libraryName={lib.name} currentPct={pct} uni="regina" />
+          </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
             <span className={lib.isOpen ? "animate-pulse" : ""} style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", backgroundColor: lib.isOpen ? "#10b981" : "#ef4444", flexShrink: 0 }} />
@@ -99,6 +79,9 @@ function LibraryRow({ lib }: { lib: LibRow }) {
             {lib.people} / {lib.capacity} people
           </p>
 
+          {/* Occupancy history sparkline + best time */}
+          <OccupancyHistory libraryName={lib.name} />
+
           {lib.subLocs.length > 0 && (
             <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 10 }}>
               <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--text-muted)", marginBottom: 2 }}>By floor</p>
@@ -107,7 +90,7 @@ function LibraryRow({ lib }: { lib: LibRow }) {
                 return (
                   <div key={loc.name} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <span style={{ width: 120, flexShrink: 0, fontSize: 12, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{loc.name}</span>
-                    <div className="bar-track" style={{ flex: 1 }}>
+                    <div className="bar-track" style={{ flex: 1, minWidth: 0 }}>
                       <div className={occBarClass(lPct)} style={{ width: `${Math.min(100, loc.percentage * 100)}%` }} />
                     </div>
                     <span style={{ fontSize: 12, fontWeight: 700, fontVariantNumeric: "tabular-nums", width: 36, textAlign: "right", color: occColor(lPct) }}>{lPct}%</span>

@@ -38,10 +38,28 @@ export default function useLibraryData(uni: Uni) {
         fetch(`/api/live?uni=${uni}`).then((res) => {
           if (!res.ok) throw new Error("fetch_failed");
           return res.json();
-        }).then((json) => ({
-          live: Array.isArray(json?.live) ? json.live : [],
-          compare: json?.compare ?? {},
-        })),
+        }).then((json) => {
+          const live: WaitzLocation[] = Array.isArray(json?.live) ? json.live : [];
+
+          // Fire-and-forget: record a snapshot without blocking the UI
+          const snapshots = live.flatMap((loc) => [
+            { library_name: loc.name, floor_name: null,     percent_full: Math.round(loc.percentage * 100) },
+            ...loc.subLocs.map((sub) => ({
+              library_name: loc.name,
+              floor_name:   sub.name,
+              percent_full: Math.round(sub.percentage * 100),
+            })),
+          ]);
+          if (snapshots.length > 0) {
+            fetch("/api/snapshot", {
+              method:  "POST",
+              headers: { "Content-Type": "application/json" },
+              body:    JSON.stringify(snapshots),
+            }).catch(() => {});
+          }
+
+          return { live, compare: json?.compare ?? {} };
+        }),
       refetchInterval: 300_000,
       staleTime: 300_000,
       gcTime: 600_000,

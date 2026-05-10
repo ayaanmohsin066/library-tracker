@@ -5,6 +5,8 @@ import Navbar from "@/components/Navbar";
 import BestSpotCard from "@/components/BestSpotCard";
 import { SkeletonCard, ErrorBanner, StaleBanner } from "@/components/tabs/shared";
 import useLibraryData from "@/hooks/useLibraryData";
+import OccupancyHistory from "@/components/OccupancyHistory";
+import NotifyButton from "@/components/NotifyButton";
 
 const Spline = dynamic(() => import("@splinetool/react-spline/next"), { ssr: false });
 
@@ -74,9 +76,10 @@ interface LibRow {
 }
 
 function LibraryRow({ lib }: { lib: LibRow }) {
-  const pct  = Math.round(lib.percentage * 100);
-  const col  = occColor(pct);
-  const barC = occBarClass(pct);
+  const pct       = Math.round(lib.percentage * 100);
+  const col       = occColor(pct);
+  const barC      = occBarClass(pct);
+  const showModel = lib.name === "Dana Porter Library";
 
   return (
     <div
@@ -87,48 +90,54 @@ function LibraryRow({ lib }: { lib: LibRow }) {
         overflow: "hidden",
       }}
     >
-      <div className="flex flex-col md:flex-row" style={{ minHeight: "500px" }}>
+      <div className="flex flex-col md:flex-row" style={showModel ? { minHeight: "500px" } : undefined}>
 
-        {/* ── Right: 3D model (first in DOM = top on mobile) ── */}
-        <div
-          className="md:order-2 h-[280px] md:h-auto"
-          style={{
-            flex: "0 0 55%",
-            position: "relative",
-            backgroundColor: "var(--bg-elevated)",
-            boxShadow: "inset 0 0 40px rgba(6,182,212,0.04)",
-          }}
-        >
-          <div style={{ width: "100%", height: "100%" }}>
-            <Spline scene="https://prod.spline.design/QTywC7dN0ox5Yx3T/scene.splinecode" />
+        {/* ── Right: 3D model — Dana Porter only ── */}
+        {showModel && (
+          <div
+            className="order-2 md:order-2 h-[280px] md:h-auto"
+            style={{
+              flex: "0 0 55%",
+              position: "relative",
+              backgroundColor: "var(--bg-elevated)",
+              boxShadow: "inset 0 0 40px rgba(6,182,212,0.04)",
+            }}
+          >
+            <div style={{ width: "100%", height: "100%" }}>
+              <Spline scene="https://prod.spline.design/QTywC7dN0ox5Yx3T/scene.splinecode" />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ── Vertical separator (desktop only) ── */}
-        <div
-          className="md:order-15 hidden md:block"
-          style={{
-            width: "1px",
-            flexShrink: 0,
-            background: "linear-gradient(to bottom, transparent, var(--border) 20%, var(--border) 80%, transparent)",
-          }}
-        />
+        {showModel && (
+          <div
+            className="md:order-15 hidden md:block"
+            style={{
+              width: "1px",
+              flexShrink: 0,
+              background: "linear-gradient(to bottom, transparent, var(--border) 20%, var(--border) 80%, transparent)",
+            }}
+          />
+        )}
 
         {/* ── Left: info panel ── */}
         <div
-          className="md:order-1"
+          className="order-1 md:order-1 px-6 py-9 md:px-10"
           style={{
-            flex: "0 0 45%",
-            padding: "36px 40px",
+            flex: showModel ? "0 0 45%" : "1",
             display: "flex",
             flexDirection: "column",
             gap: 0,
           }}
         >
-          {/* Name */}
-          <h2 style={{ fontSize: "clamp(1.2rem, 2.5vw, 1.55rem)", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
-            {lib.name}
-          </h2>
+          {/* Name + notification bell */}
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+            <h2 style={{ fontSize: "clamp(1.2rem, 2.5vw, 1.55rem)", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+              {lib.name}
+            </h2>
+            <NotifyButton libraryName={lib.name} currentPct={pct} uni="waterloo" />
+          </div>
 
           {/* Status */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
@@ -160,6 +169,9 @@ function LibraryRow({ lib }: { lib: LibRow }) {
             {lib.people} / {lib.capacity} people
           </p>
 
+          {/* Occupancy history sparkline + best time */}
+          <OccupancyHistory libraryName={lib.name} />
+
           {/* Floor breakdown */}
           {lib.subLocs.length > 0 && (
             <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -169,11 +181,11 @@ function LibraryRow({ lib }: { lib: LibRow }) {
               {lib.subLocs.map((loc) => {
                 const lPct = Math.round(loc.percentage * 100);
                 return (
-                  <div key={loc.name} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ width: 120, flexShrink: 0, fontSize: 12, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div key={loc.name} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <span style={{ minWidth: 120, flexShrink: 0, fontSize: 12, color: "var(--text-secondary)" }}>
                       {loc.name}
                     </span>
-                    <div className="bar-track" style={{ flex: 1 }}>
+                    <div className="bar-track" style={{ flex: 1, minWidth: 0 }}>
                       <div className={occBarClass(lPct)} style={{ width: `${Math.min(100, loc.percentage * 100)}%` }} />
                     </div>
                     <span
