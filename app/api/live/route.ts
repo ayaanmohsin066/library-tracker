@@ -38,19 +38,16 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const base = request.nextUrl.origin;
+  const WAITZ_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Referer": "https://waitz.io/",
+    "Accept": "application/json, text/plain, */*",
+  };
 
   try {
     const [liveRes, compareRes] = await Promise.all([
-      fetch(`${base}/api/waitz/${uni}`, { cache: "no-store" }),
-      fetch(`https://waitz.io/compare/${uni}`, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-          "Referer": "https://waitz.io/",
-          "Accept": "application/json, text/plain, */*",
-        },
-        cache: "no-store",
-      }),
+      fetch(`https://waitz.io/live/${uni}`,    { headers: WAITZ_HEADERS, cache: "no-store" }),
+      fetch(`https://waitz.io/compare/${uni}`, { headers: WAITZ_HEADERS, cache: "no-store" }),
     ]);
 
     if (!liveRes.ok || !compareRes.ok) {
