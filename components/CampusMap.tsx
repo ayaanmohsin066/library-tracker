@@ -6,29 +6,41 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { buildings, type Building, type StudySpace } from "@/lib/buildingData";
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function hasKeycard(b: Building) {
+  return b.studySpaces.some((s) => s.keycardRequired);
+}
+
 // ── Custom circular marker ────────────────────────────────────────────────────
 
-function markerIcon(shortName: string, selected: boolean): L.DivIcon {
+function markerIcon(b: Building, selected: boolean): L.DivIcon {
   const bg   = selected ? "#06b6d4" : "rgba(6,182,212,0.88)";
   const glow = selected
     ? "0 0 18px rgba(6,182,212,0.85),0 2px 8px rgba(0,0,0,0.5)"
     : "0 0 8px rgba(6,182,212,0.4),0 2px 6px rgba(0,0,0,0.35)";
   const ring = selected ? "2px solid rgba(255,255,255,0.55)" : "2px solid rgba(6,182,212,0.35)";
-  const size = selected ? "1.12" : "1";
+  const scale = selected ? "1.12" : "1";
+  const lock = hasKeycard(b)
+    ? `<span style="position:absolute;top:-4px;right:-4px;font-size:9px;line-height:1;background:#0a0a0f;border-radius:50%;padding:1px;">🔒</span>`
+    : "";
   return L.divIcon({
     className: "",
-    html: `<div style="
-      width:36px;height:36px;border-radius:50%;
-      background:${bg};
-      display:flex;align-items:center;justify-content:center;
-      font-size:11px;font-weight:800;color:#fff;
-      font-family:system-ui,-apple-system,sans-serif;
-      letter-spacing:-0.01em;
-      box-shadow:${glow};
-      border:${ring};
-      transform:scale(${size});
-      transition:transform 150ms ease,box-shadow 150ms ease;
-    ">${shortName}</div>`,
+    html: `<div style="position:relative;width:36px;height:36px;">
+      <div style="
+        width:36px;height:36px;border-radius:50%;
+        background:${bg};
+        display:flex;align-items:center;justify-content:center;
+        font-size:11px;font-weight:800;color:#fff;
+        font-family:system-ui,-apple-system,sans-serif;
+        letter-spacing:-0.01em;
+        box-shadow:${glow};
+        border:${ring};
+        transform:scale(${scale});
+        transition:transform 150ms ease,box-shadow 150ms ease;
+      ">${b.shortName}</div>
+      ${lock}
+    </div>`,
     iconSize: [36, 36],
     iconAnchor: [18, 18],
   });
@@ -56,6 +68,30 @@ function NoiseBadge({ level }: { level: StudySpace["noiseLevel"] }) {
   );
 }
 
+// ── Type badge ────────────────────────────────────────────────────────────────
+
+const TYPE_MAP: Record<StudySpace["type"], { icon: string; label: string }> = {
+  individual: { icon: "🪑", label: "Individual" },
+  group:      { icon: "👥", label: "Group"      },
+  lounge:     { icon: "☕", label: "Lounge"     },
+  classroom:  { icon: "🏫", label: "Classroom"  },
+};
+
+function TypeBadge({ type }: { type: StudySpace["type"] }) {
+  const t = TYPE_MAP[type];
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 3,
+      fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 6,
+      backgroundColor: "rgba(148,163,184,0.1)", color: "var(--text-secondary)",
+      border: "1px solid rgba(148,163,184,0.2)",
+      whiteSpace: "nowrap",
+    }}>
+      {t.icon} {t.label}
+    </span>
+  );
+}
+
 // ── Info chip ─────────────────────────────────────────────────────────────────
 
 function Chip({ label, red }: { label: string; red?: boolean }) {
@@ -78,6 +114,7 @@ function Chip({ label, red }: { label: string; red?: boolean }) {
 function SpaceRow({ space }: { space: StudySpace }) {
   return (
     <div style={{ padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+      {/* Name + floor */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 7 }}>
         <div>
           <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3 }}>
@@ -88,17 +125,39 @@ function SpaceRow({ space }: { space: StudySpace }) {
         <NoiseBadge level={space.noiseLevel} />
       </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-        <Chip label={`~${space.seats} seats`} />
+      {/* Chips row */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 6 }}>
+        <TypeBadge type={space.type} />
         {space.outlets && <Chip label="🔌 Outlets" />}
         {space.printer && <Chip label="🖨️ Printer" />}
         {space.keycardRequired && <Chip label="🔒 Keycard" red />}
       </div>
 
+      {/* Notes */}
       {space.notes && (
-        <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
+        <p style={{ margin: "0 0 8px", fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
           {space.notes}
         </p>
+      )}
+
+      {/* Book now button */}
+      {space.bookingUrl && (
+        <a
+          href={space.bookingUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 4,
+            fontSize: 12, fontWeight: 700,
+            color: "#06b6d4", textDecoration: "none",
+            padding: "4px 10px", borderRadius: 7,
+            backgroundColor: "rgba(6,182,212,0.1)",
+            border: "1px solid rgba(6,182,212,0.3)",
+            transition: "background-color 150ms ease",
+          }}
+        >
+          Book now →
+        </a>
       )}
     </div>
   );
@@ -141,7 +200,6 @@ function Panel({
         @keyframes lc-slideUp    { from { transform:translateY(100%); } to { transform:translateY(0); } }
       `}</style>
 
-      {/* Mobile scrim */}
       {isMobile && (
         <div
           onClick={onClose}
@@ -156,7 +214,6 @@ function Panel({
       )}
 
       <div style={panelStyle}>
-        {/* Drag handle (mobile) */}
         {isMobile && (
           <div style={{ display: "flex", justifyContent: "center", paddingTop: 12, paddingBottom: 4 }}>
             <div style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: "var(--border)" }} />
@@ -164,12 +221,8 @@ function Panel({
         )}
 
         <div style={{ padding: isMobile ? "12px 20px 0" : "24px 20px 0" }}>
-          {/* Header */}
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-            <h2 style={{
-              margin: 0, fontSize: 17, fontWeight: 800, lineHeight: 1.25,
-              color: "var(--text-primary)", letterSpacing: "-0.02em",
-            }}>
+            <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, lineHeight: 1.25, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
               {building.name}
             </h2>
             <button
@@ -208,8 +261,8 @@ function Panel({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function CampusMap() {
-  const [selected,  setSelected]  = useState<Building | null>(null);
-  const [isMobile,  setIsMobile]  = useState(false);
+  const [selected, setSelected] = useState<Building | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -234,7 +287,7 @@ export default function CampusMap() {
           <Marker
             key={b.id}
             position={b.coords}
-            icon={markerIcon(b.shortName, selected?.id === b.id)}
+            icon={markerIcon(b, selected?.id === b.id)}
             eventHandlers={{
               click: () => setSelected((prev) => (prev?.id === b.id ? null : b)),
             }}
@@ -242,7 +295,6 @@ export default function CampusMap() {
         ))}
       </MapContainer>
 
-      {/* Info banner */}
       {!selected && (
         <div style={{
           position: "absolute", bottom: 28, left: "50%",
