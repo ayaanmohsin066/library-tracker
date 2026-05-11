@@ -38,21 +38,49 @@ export async function GET(request: Request) {
     return json({ error: "invalid_uni" }, 400);
   }
 
+  const liveUrl    = `https://waitz.io/live/${uni}`;
+  const compareUrl = `https://waitz.io/compare/${uni}`;
+  console.log(`[live] fetching ${liveUrl}`);
+
   try {
     const [liveRes, compareRes] = await Promise.all([
-      fetch(`https://waitz.io/live/${uni}`,    { headers: WAITZ_HEADERS }),
-      fetch(`https://waitz.io/compare/${uni}`, { headers: WAITZ_HEADERS }),
+      fetch(liveUrl,    { headers: WAITZ_HEADERS }),
+      fetch(compareUrl, { headers: WAITZ_HEADERS }),
     ]);
 
+    console.log(`[live] Waitz status: live=${liveRes.status} compare=${compareRes.status}`);
+
     if (!liveRes.ok || !compareRes.ok) {
-      if (!liveRes.ok)    console.error(`[live] waitz live ${liveRes.status} for ${uni}`);
-      if (!compareRes.ok) console.error(`[live] waitz compare ${compareRes.status} for ${uni}`);
+      const errBody = await (!liveRes.ok ? liveRes : compareRes).text().catch(() => "(unreadable)");
+      console.error(`[live] upstream error for ${uni}. body: ${errBody.slice(0, 500)}`);
       return json({ error: "fetch_failed" }, 500);
     }
 
-    const [liveJson, compareJson] = await Promise.all([liveRes.json(), compareRes.json()]);
-    const liveData    = Array.isArray(liveJson?.data) ? liveJson.data : [];
-    const compareData = compareJson?.data ?? {};
+    // Read as text first — Edge Runtime response body can only be consumed once
+    const [liveText, compareText] = await Promise.all([liveRes.text(), compareRes.text()]);
+    console.log(`[live] Waitz response body (first 500): ${liveText.slice(0, 500)}`);
+
+    let liveJson: unknown;
+    let compareJson: unknown;
+
+    try {
+      liveJson = JSON.parse(liveText);
+    } catch (e) {
+      console.error(`[live] JSON parse failed for ${uni}: ${e}. Raw: ${liveText.slice(0, 300)}`);
+      return json({ error: "parse_failed" }, 500);
+    }
+
+    try {
+      compareJson = JSON.parse(compareText);
+    } catch {
+      compareJson = { data: {} };
+    }
+
+    const raw = (liveJson as Record<string, unknown>);
+    const liveData = Array.isArray(raw?.data) ? raw.data : [];
+    const compareData = (compareJson as Record<string, unknown>)?.data ?? {};
+
+    console.log(`[live] liveData length=${(liveData as unknown[]).length} firstItem=${JSON.stringify((liveData as unknown[])[0] ?? null).slice(0, 200)}`);
 
     return json({ live: liveData, compare: compareData });
   } catch (err) {
