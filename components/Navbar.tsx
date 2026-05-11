@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { href: "/regina",   label: "Regina"   },
   { href: "/uoft",     label: "UofT"     },
   { href: "/labs",     label: "Labs"     },
+  { href: "/map",      label: "Map"      },
 ];
 
 const LOGO_STYLE: React.CSSProperties = {
