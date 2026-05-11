@@ -240,9 +240,25 @@ function Panel({
               </svg>
             </button>
           </div>
-          <p style={{ margin: "5px 0 16px", fontSize: 13, color: "var(--text-muted)", lineHeight: 1.45 }}>
+          <p style={{ margin: "5px 0 10px", fontSize: 13, color: "var(--text-muted)", lineHeight: 1.45 }}>
             {building.description}
           </p>
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&destination=${building.coords[0]},${building.coords[1]}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 5,
+              fontSize: 12, fontWeight: 600,
+              color: "var(--text-secondary)", textDecoration: "none",
+              padding: "5px 11px", borderRadius: 8, marginBottom: 14,
+              backgroundColor: "transparent",
+              border: "1px solid var(--border)",
+              transition: "border-color 150ms ease, color 150ms ease",
+            }}
+          >
+            📍 Get directions
+          </a>
           <p style={{ margin: "0 0 2px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--text-muted)" }}>
             Study Spaces
           </p>
