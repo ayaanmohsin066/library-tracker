@@ -6,7 +6,14 @@ export const dynamic = "force-dynamic";
 
 async function fetchUniOccupancy(uni: string): Promise<Record<string, number>> {
   try {
-    const res = await fetch(`https://waitz.io/live/${uni}`, { cache: "no-store" });
+    const res = await fetch(`https://waitz.io/live/${uni}`, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Referer": "https://waitz.io/",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+    });
     if (!res.ok) return {};
     const json = await res.json();
     const result: Record<string, number> = {};

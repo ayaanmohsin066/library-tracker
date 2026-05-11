@@ -10,6 +10,27 @@ import NotifyButton from "@/components/NotifyButton";
 
 const Spline = dynamic(() => import("@splinetool/react-spline/next"), { ssr: false });
 
+// ── Temporary debug panel — remove once live data is confirmed working ─────────
+import { useState as useStateDebug, useEffect as useEffectDebug } from "react";
+function DebugPanel({ uni }: { uni: string }) {
+  const [info, setInfo] = useStateDebug<string | null>(null);
+  useEffectDebug(() => {
+    fetch(`/api/live?uni=${uni}`)
+      .then(async (r) => { const t = await r.text(); setInfo(`HTTP ${r.status}\n${t.slice(0, 800)}`); })
+      .catch((e) => setInfo(`Network error: ${String(e)}`));
+  }, [uni]);
+  if (!info) return null;
+  return (
+    <pre style={{
+      marginTop: 8, padding: "8px 12px", borderRadius: 8,
+      fontSize: 10, lineHeight: 1.5, fontFamily: "monospace",
+      color: "var(--text-muted)", backgroundColor: "var(--bg-surface)",
+      border: "1px solid var(--border)", overflow: "auto", maxHeight: 160,
+      whiteSpace: "pre-wrap", wordBreak: "break-all",
+    }}>{info}</pre>
+  );
+}
+
 const WireframeCube = dynamic(() => import("@/components/WireframeCube"), {
   ssr: false,
   loading: () => <div className="animate-shimmer" style={{ width: "100%", height: "100%", borderRadius: "12px" }} />,
@@ -288,7 +309,12 @@ export default function WaterlooPage() {
 
         {/* ── Stale / Error ────────────────────────────────────────── */}
         {isStale && <div style={{ marginBottom: 16 }}><StaleBanner onRetry={refetch} /></div>}
-        {isError && !data && <ErrorBanner onRetry={refetch} />}
+        {isError && !data && (
+          <div style={{ marginBottom: 16 }}>
+            <ErrorBanner onRetry={refetch} />
+            <DebugPanel uni="waterloo" />
+          </div>
+        )}
 
         {/* ── Best spot ────────────────────────────────────────────── */}
         {!isLoading && libraries.length > 0 && (

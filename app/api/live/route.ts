@@ -80,9 +80,20 @@ export async function GET(request: Request) {
     const liveData = Array.isArray(raw?.data) ? raw.data : [];
     const compareData = (compareJson as Record<string, unknown>)?.data ?? {};
 
-    console.log(`[live] liveData length=${(liveData as unknown[]).length} firstItem=${JSON.stringify((liveData as unknown[])[0] ?? null).slice(0, 200)}`);
+    const liveArr = liveData as unknown[];
+    console.log(`[live] liveData length=${liveArr.length} firstItem=${JSON.stringify(liveArr[0] ?? null).slice(0, 200)}`);
 
-    return json({ live: liveData, compare: compareData });
+    return json({
+      live:    liveData,
+      compare: compareData,
+      debug: {
+        liveStatus:       liveRes.status,
+        compareStatus:    compareRes.status,
+        liveUrl:          liveUrl,
+        liveLength:       liveArr.length,
+        rawBodyFirst300:  liveText.slice(0, 300),
+      },
+    });
   } catch (err) {
     console.error(`[live] fetch error for ${uni}:`, String(err));
     return json({ error: "fetch_failed" }, 500);
