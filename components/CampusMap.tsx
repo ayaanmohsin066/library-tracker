@@ -621,7 +621,7 @@ export default function CampusMap() {
 
       <Map
         mapboxAccessToken={TOKEN}
-        initialViewState={{ longitude: -80.5449, latitude: 43.4723, zoom: 16.2 }}
+        initialViewState={{ longitude: -80.5435, latitude: 43.4710, zoom: 15.8 }}
         minZoom={14}
         maxZoom={19}
         scrollZoom={!isMobile}

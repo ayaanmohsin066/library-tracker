@@ -24,7 +24,7 @@ export const buildings: Building[] = [
     id: "dana-porter",
     name: "Dana Porter Library",
     shortName: "LIB",
-    coords: [43.4698, -80.5430],
+    coords: [43.4695, -80.5430],
     description: "Main humanities and social sciences library. Note: Floor 5 is permanently inaccessible to students.",
     studySpaces: [
       { floor: "Floors 6–9", name: "Individual Study Carrels", type: "individual", noiseLevel: "silent", keycardRequired: false, outlets: true, printer: false, bookingUrl: "https://lib.uwaterloo.ca/web/clickable-floor-plans", notes: "Consult clickable floor plans for exact locations" },
@@ -36,7 +36,7 @@ export const buildings: Building[] = [
     id: "davis-centre",
     name: "Davis Centre Library",
     shortName: "DC",
-    coords: [43.4732, -80.5425],
+    coords: [43.4730, -80.5417],
     description: "Engineering and computer science library inside the William G. Davis Computer Research Centre.",
     studySpaces: [
       { floor: "Main & Lower Floors", name: "Individual Study Carrels", type: "individual", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "" },
@@ -48,7 +48,7 @@ export const buildings: Building[] = [
     id: "musagetes",
     name: "Musagetes Architecture Library",
     shortName: "ARC",
-    coords: [43.4684, -80.5402],
+    coords: [43.4682, -80.5397],
     description: "Architecture library with individual and small group study spaces.",
     studySpaces: [
       { floor: "Main Floor", name: "Individual Study Carrels", type: "individual", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "" },
@@ -59,7 +59,7 @@ export const buildings: Building[] = [
     id: "conrad-grebel",
     name: "Conrad Grebel University College",
     shortName: "CGR",
-    coords: [43.4664, -80.5476],
+    coords: [43.4659, -80.5474],
     description: "Milton Good Library offers quiet individual and group study.",
     studySpaces: [
       { floor: "Library", name: "Individual Study Carrels", type: "individual", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "" },
@@ -70,7 +70,7 @@ export const buildings: Building[] = [
     id: "renison",
     name: "Renison University College",
     shortName: "REN",
-    coords: [43.4674, -80.5486],
+    coords: [43.4669, -80.5481],
     description: "Lusi Wong Library with individual carrels and group study rooms.",
     studySpaces: [
       { floor: "Library", name: "Individual Study Carrels", type: "individual", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "" },
@@ -81,7 +81,7 @@ export const buildings: Building[] = [
     id: "st-jeromes",
     name: "St. Jerome's University Library",
     shortName: "SJU",
-    coords: [43.4679, -80.5502],
+    coords: [43.4674, -80.5497],
     description: "University college library with quiet study and group rooms.",
     studySpaces: [
       { floor: "Library", name: "Individual Study Carrels", type: "individual", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "" },
@@ -103,7 +103,7 @@ export const buildings: Building[] = [
     id: "needles-hall",
     name: "Needles Hall — The Centre",
     shortName: "NH",
-    coords: [43.4713, -80.5454],
+    coords: [43.4716, -80.5449],
     description: "Administrative and student services hub with first-come first-serve study rooms.",
     studySpaces: [
       { floor: "Floor 1", name: "Study Rooms (×6)", type: "individual", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "First-come, first-served. No booking required." },
@@ -113,7 +113,7 @@ export const buildings: Building[] = [
     id: "slc",
     name: "Student Life Centre",
     shortName: "SLC",
-    coords: [43.4726, -80.5453],
+    coords: [43.4712, -80.5462],
     description: "Student hub with food, services, and study space. Note: 1 study room currently closed for MC link construction.",
     studySpaces: [
       { floor: "Floor 3", name: "Quiet Study Room", type: "individual", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "Small portion (~20%) closed due to construction. Mostly open." },
@@ -125,7 +125,7 @@ export const buildings: Building[] = [
     id: "tatham-centre",
     name: "William M. Tatham Centre",
     shortName: "TC",
-    coords: [43.4683, -80.5432],
+    coords: [43.4680, -80.5428],
     description: "CEE (co-op) building. Interview rooms available as study rooms outside interview cycles.",
     studySpaces: [
       { floor: "Main Floor", name: "Interview Rooms as Study Space", type: "individual", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, bookingUrl: "https://uwaterloo.ca/co-operative-education/contact-us/tc-room-use-principles#tc-rooms", notes: "Weekdays 9am–9pm (9am–11pm during exams). During interview cycles, available from 4:30pm. Request at CEE Hub on main floor." },
@@ -135,7 +135,7 @@ export const buildings: Building[] = [
     id: "e2",
     name: "Engineering 2",
     shortName: "E2",
-    coords: [43.4720, -80.5395],
+    coords: [43.4720, -80.5392],
     description: "Engineering building with accessible classroom space when not in use.",
     studySpaces: [
       { floor: "Floor 3", name: "Room 3353 (Classroom)", type: "classroom", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "Accessible when not in use for class" },
@@ -145,7 +145,7 @@ export const buildings: Building[] = [
     id: "cph",
     name: "Carl A. Pollock Hall",
     shortName: "CPH",
-    coords: [43.4706, -80.5408],
+    coords: [43.4707, -80.5402],
     description: "Engineering building with classroom space and POETS lounge.",
     studySpaces: [
       { floor: "Floor 3", name: "Room 3613 (Classroom)", type: "classroom", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "Accessible when not in use for class" },
@@ -156,7 +156,7 @@ export const buildings: Building[] = [
     id: "physics",
     name: "Physics Building",
     shortName: "PHY",
-    coords: [43.4718, -80.5447],
+    coords: [43.4718, -80.5440],
     description: "Physics building with classroom study space when not in use.",
     studySpaces: [
       { floor: "Floor 1", name: "Room 153 (Classroom)", type: "classroom", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "Accessible when not in use for class" },
@@ -166,7 +166,7 @@ export const buildings: Building[] = [
     id: "modern-languages",
     name: "Modern Languages",
     shortName: "ML",
-    coords: [43.4693, -80.5454],
+    coords: [43.4691, -80.5449],
     description: "Arts building with classroom space and a lower-level cafeteria.",
     studySpaces: [
       { floor: "Floor 3", name: "Room 355 (Classroom)", type: "classroom", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "Accessible when not in use for class" },
@@ -177,7 +177,7 @@ export const buildings: Building[] = [
     id: "hagey-hall",
     name: "Hagey Hall (The Hub)",
     shortName: "HH",
-    coords: [43.4690, -80.5448],
+    coords: [43.4688, -80.5444],
     description: "Arts faculty hub with bookable rooms, open mezzanine, and quiet study deck.",
     studySpaces: [
       { floor: "Floor 2", name: "Project Cube (HH 2034)", type: "group", noiseLevel: "collaborative", keycardRequired: true, outlets: true, printer: false, notes: "Glass-walled room. Available for booking by arts students with valid WatCard. Contact Dean of Arts Office: ext. 32400" },
@@ -189,7 +189,7 @@ export const buildings: Building[] = [
     id: "stc",
     name: "Science Teaching Complex",
     shortName: "STC",
-    coords: [43.4734, -80.5453],
+    coords: [43.4736, -80.5448],
     description: "Science faculty building with lounge and individual/double study spaces.",
     studySpaces: [
       { floor: "Various", name: "Lounge & Study Spaces", type: "individual", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "Single and double study spaces available" },
@@ -199,7 +199,7 @@ export const buildings: Building[] = [
     id: "qnc",
     name: "Quantum Nano Centre",
     shortName: "QNC",
-    coords: [43.4715, -80.5415],
+    coords: [43.4706, -80.5418],
     description: "Research building with beautiful atrium study spaces. Rarely crowded.",
     studySpaces: [
       { floor: "Various", name: "Single/Double Study Spaces", type: "individual", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "Quiet and rarely crowded" },
@@ -209,7 +209,7 @@ export const buildings: Building[] = [
     id: "e5",
     name: "Engineering 5",
     shortName: "E5",
-    coords: [43.4726, -80.5391],
+    coords: [43.4726, -80.5386],
     description: "Engineering building with group tables, a lounge, and computer study spaces.",
     studySpaces: [
       { floor: "Floor 2", name: "Study Spaces with Computers", type: "individual", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "Access to computers" },
@@ -221,7 +221,7 @@ export const buildings: Building[] = [
     id: "mc",
     name: "Math & Computer Building",
     shortName: "MC",
-    coords: [43.4721, -80.5441],
+    coords: [43.4723, -80.5432],
     description: "Mathematics faculty building with computer labs, Math C&D, and study areas.",
     studySpaces: [
       { floor: "Floor 3", name: "Math Coffee & Donut Shop", type: "lounge", noiseLevel: "collaborative", keycardRequired: false, outlets: false, printer: false, notes: "Campus institution. Good for casual study between classes." },
@@ -231,7 +231,7 @@ export const buildings: Building[] = [
     id: "ev1",
     name: "Environment 1",
     shortName: "EV1",
-    coords: [43.4676, -80.5476],
+    coords: [43.4679, -80.5468],
     description: "Environment faculty building with a central courtyard.",
     studySpaces: [
       { floor: "Outside", name: "Courtyard", type: "lounge", noiseLevel: "collaborative", keycardRequired: false, outlets: false, printer: false, notes: "Outdoor courtyard seating. Weather-dependent." },
@@ -241,7 +241,7 @@ export const buildings: Building[] = [
     id: "ev3",
     name: "Environment 3",
     shortName: "EV3",
-    coords: [43.4680, -80.5472],
+    coords: [43.4683, -80.5465],
     description: "Environment faculty building with Williams Fresh Café.",
     studySpaces: [
       { floor: "Main Floor", name: "Williams Fresh Café", type: "lounge", noiseLevel: "collaborative", keycardRequired: false, outlets: false, printer: false, notes: "Café seating. Good for casual study." },
