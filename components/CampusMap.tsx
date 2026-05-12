@@ -377,6 +377,12 @@ function BuildingMarker({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+const TOKEN_MISSING = !TOKEN || TOKEN === "pk.eyJ1IjoiZXhhbXBsZSJ9.example";
+if (TOKEN_MISSING) {
+  console.warn("Add NEXT_PUBLIC_MAPBOX_TOKEN to .env.local — get a free token at mapbox.com");
+}
+
 export default function CampusMap() {
   const [selected, setSelected] = useState<Building | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -388,6 +394,28 @@ export default function CampusMap() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
+  if (TOKEN_MISSING) {
+    return (
+      <div style={{
+        width: "100%", height: "100%",
+        background: "#0A0F1C",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        flexDirection: "column", gap: 12, textAlign: "center", padding: 32,
+      }}>
+        <span className="material-symbols-outlined" style={{ fontSize: 48, color: "#6366F1" }}>map</span>
+        <h2 style={{ margin: 0, color: "#e2e2e8", fontFamily: "Sora, sans-serif", fontSize: "1.1rem", fontWeight: 700 }}>
+          Interactive map unavailable
+        </h2>
+        <p style={{ margin: 0, color: "#6B7FA3", fontSize: 14, maxWidth: 360, lineHeight: 1.6 }}>
+          Add your Mapbox token in <code style={{ color: "#818CF8" }}>.env.local</code> to enable the interactive map.{" "}
+          <a href="https://mapbox.com" target="_blank" rel="noopener noreferrer" style={{ color: "#818CF8" }}>
+            Get a free token at mapbox.com →
+          </a>
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
       <style>{`
@@ -398,7 +426,7 @@ export default function CampusMap() {
       `}</style>
 
       <Map
-        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+        mapboxAccessToken={TOKEN}
         initialViewState={{
           longitude: -80.5449,
           latitude:  43.4723,

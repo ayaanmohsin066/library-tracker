@@ -51,13 +51,12 @@ export default function RootLayout({
         {/* Prevent flash of wrong theme on load */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem('lc-theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}`,
+            __html: `(function(){try{var t=localStorage.getItem('lc-theme');if(t==='light')document.documentElement.classList.add('light');}catch(e){}}())`,
           }}
         />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{ backgroundColor: "#0A0F1C", color: "#e2e2e8" }}
       >
         <Providers>
           <Navbar />

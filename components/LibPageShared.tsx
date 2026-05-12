@@ -5,7 +5,7 @@ import Link from "next/link";
 
 // ── Color helper ────────────────────────────────────────────────────
 export function occupancyColor(pct: number): string {
-  return pct > 80 ? "#ffb4ab" : pct > 50 ? "#f59e0b" : "#34D399";
+  return pct > 80 ? "#EF4444" : pct > 50 ? "#F59E0B" : "#34D399";
 }
 
 // ── Occupancy Ticker ────────────────────────────────────────────────
@@ -216,7 +216,7 @@ export function StatChipsRow({
       <StatChip
         label="Busiest"
         value={busiest ? `${busiest.name.split(" ")[0]} · ${busiest.pct}%` : "—"}
-        accent={busiest ? (busiest.pct > 80 ? "#ffb4ab" : "#818CF8") : undefined}
+        accent={busiest ? (busiest.pct > 80 ? "#EF4444" : "#818CF8") : undefined}
       />
     </div>
   );
@@ -228,8 +228,8 @@ function ProgressRing({ pct, isOpen }: { pct: number; isOpen: boolean }) {
   const offset = circumference - (circumference * pct) / 100;
   const stroke = !isOpen
     ? "#1E3A5F"
-    : pct > 80 ? "#ffb4ab"
-    : pct > 50 ? "#818CF8"
+    : pct > 80 ? "#EF4444"
+    : pct > 50 ? "#F59E0B"
     : "#34D399";
 
   return (
@@ -267,7 +267,7 @@ export function LibraryCard({
   const pct          = Math.round(percentage * 100);
   const color        = occupancyColor(pct);
   const displayColor = isOpen ? color : "#6B7FA3";
-  const ringStroke   = !isOpen ? "#1E3A5F" : pct > 80 ? "#ffb4ab" : pct > 50 ? "#818CF8" : "#34D399";
+  const ringStroke   = !isOpen ? "#1E3A5F" : pct > 80 ? "#EF4444" : pct > 50 ? "#F59E0B" : "#34D399";
 
   return (
     <div

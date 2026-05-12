@@ -137,7 +137,7 @@ const UNI_META: Record<UniId, { name: string; short: string; href: string; libCo
 };
 
 function ringColor(pct: number) {
-  return pct > 80 ? "#ffb4ab" : pct > 50 ? "#f59e0b" : "#34D399";
+  return pct > 80 ? "#EF4444" : pct > 50 ? "#F59E0B" : "#34D399";
 }
 
 // ── Live Cycling Preview Card ───────────────────────────────────────
@@ -654,59 +654,75 @@ export default function LandingPage() {
           How it works
         </h2>
 
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: 20,
-          maxWidth: 900,
-          margin: "0 auto",
-        }}>
-          {STEPS.map((step, i) => (
-            <div
-              key={step.num}
-              ref={(el) => { stepRefs.current[i] = el; }}
-              style={{
-                padding: "36px 28px",
-                borderRadius: 20,
-                border: "1px solid var(--border)",
-                backgroundColor: "var(--bg-surface)",
-                textAlign: "left",
-                opacity: visibleSteps[i] ? 1 : 0,
-                transform: visibleSteps[i] ? "translateY(0)" : "translateY(32px)",
-                transition: `opacity 600ms ease ${i * 130}ms, transform 600ms ease ${i * 130}ms`,
-              }}
-            >
-              <div style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 52, height: 52,
-                borderRadius: 14,
-                backgroundColor: `${step.color}18`,
-                border: `1px solid ${step.color}30`,
-                color: step.color,
-                marginBottom: 20,
-              }}>
-                {step.icon}
+        <div style={{ position: "relative", maxWidth: 900, margin: "0 auto" }}>
+          <div
+            className="hidden md:block"
+            style={{
+              position: "absolute",
+              top: 62,
+              left: "calc(100% / 6)",
+              right: "calc(100% / 6)",
+              height: 1,
+              background: "linear-gradient(90deg, transparent, rgba(99,102,241,0.35), transparent)",
+              zIndex: 0,
+              pointerEvents: "none",
+            }}
+          />
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: 20,
+          }}>
+            {STEPS.map((step, i) => (
+              <div
+                key={step.num}
+                ref={(el) => { stepRefs.current[i] = el; }}
+                className={`step-card${visibleSteps[i] ? " visible" : ""}`}
+                style={{
+                  padding: "36px 28px",
+                  borderRadius: 20,
+                  border: "1px solid var(--border)",
+                  backgroundColor: "var(--bg-surface)",
+                  textAlign: "left",
+                  transitionDelay: `${i * 150}ms`,
+                  position: "relative",
+                  zIndex: 1,
+                }}
+              >
+                <div style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 52, height: 52,
+                  borderRadius: "50%",
+                  backgroundColor: `${step.color}18`,
+                  border: `1.5px solid ${step.color}50`,
+                  color: step.color,
+                  marginBottom: 20,
+                  fontSize: "1.25rem", fontWeight: 900,
+                  fontFamily: "Sora, sans-serif",
+                }}>
+                  {step.num}
+                </div>
+                <p style={{
+                  fontSize: 11, fontWeight: 700, textTransform: "uppercase",
+                  letterSpacing: "0.15em", color: step.color,
+                  marginBottom: 8, opacity: 0.85,
+                }}>
+                  Step {step.num}
+                </p>
+                <h3 style={{
+                  fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)",
+                  marginBottom: 10, lineHeight: 1.3,
+                }}>
+                  {step.title}
+                </h3>
+                <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.65 }}>
+                  {step.desc}
+                </p>
               </div>
-              <p style={{
-                fontSize: 11, fontWeight: 700, textTransform: "uppercase",
-                letterSpacing: "0.15em", color: step.color,
-                marginBottom: 8, opacity: 0.85,
-              }}>
-                Step {step.num}
-              </p>
-              <h3 style={{
-                fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)",
-                marginBottom: 10, lineHeight: 1.3,
-              }}>
-                {step.title}
-              </h3>
-              <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.65 }}>
-                {step.desc}
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
     </div>

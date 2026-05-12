@@ -259,3 +259,20 @@ html {
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
+
+/* ── Light mode overrides ───────────────────────────────────── */
+.light { --bg-base: #F8FAFC; color-scheme: light; }
+.light body { background: #F8FAFC; color: #0F172A; }
+.light .glass-panel { background: rgba(255,255,255,0.7); border-color: rgba(0,0,0,0.1); }
+.light .glass-card { background: rgba(255,255,255,0.8); }
+
+/* ── Step card scroll animation ─────────────────────────────── */
+.step-card {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.step-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}

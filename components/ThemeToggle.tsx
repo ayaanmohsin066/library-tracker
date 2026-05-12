@@ -56,10 +56,10 @@ export default function ThemeToggle() {
     const next = !isDark;
     setIsDark(next);
     if (next) {
-      document.documentElement.removeAttribute("data-theme");
+      document.documentElement.classList.remove("light");
       localStorage.setItem("lc-theme", "dark");
     } else {
-      document.documentElement.setAttribute("data-theme", "light");
+      document.documentElement.classList.add("light");
       localStorage.setItem("lc-theme", "light");
     }
   }
