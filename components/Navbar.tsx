@@ -6,9 +6,10 @@ import { usePathname } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const NAV_LINKS = [
-  { href: "/waterloo", label: "Dashboard" },
-  { href: "/map",      label: "Map"       },
-  { href: "/labs",     label: "Labs"      },
+  { href: "/waterloo",     label: "Dashboard"   },
+  { href: "/map",          label: "Map"         },
+  { href: "/study-rooms",  label: "Study Rooms" },
+  { href: "/labs",         label: "Labs"        },
 ];
 
 export default function Navbar() {

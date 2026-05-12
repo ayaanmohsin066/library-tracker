@@ -136,6 +136,34 @@ const UNI_META: Record<UniId, { name: string; short: string; href: string; libCo
   uoft:     { name: "University of Toronto",  short: "UofT",      href: "/uoft",     libCount: 9 },
 };
 
+// Inline SVG icons matching ti-school, ti-building-community, ti-building
+const UNI_ICONS: Record<UniId, React.ReactNode> = {
+  waterloo: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M22 9l-10-4-10 4 10 4 10-4v6" />
+      <path d="M6 10.6V16a6 6 0 0 0 12 0v-5.4" />
+    </svg>
+  ),
+  regina: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M8 9l4-4 4 4" />
+      <path d="M10 21v-4a2 2 0 1 1 4 0v4" />
+      <path d="M3 21V10l5-3" />
+      <path d="M21 21V10l-5-3" />
+      <path d="M5 21h14" />
+    </svg>
+  ),
+  uoft: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 21h18" />
+      <path d="M9 21V7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14" />
+      <path d="M9 7L5 9v12" />
+      <path d="M15 7l4 2v12" />
+      <path d="M11 11h2" /><path d="M11 15h2" />
+    </svg>
+  ),
+};
+
 function ringColor(pct: number) {
   return pct > 80 ? "#EF4444" : pct > 50 ? "#F59E0B" : "#34D399";
 }
@@ -301,6 +329,17 @@ function UniCard({ uni }: { uni: UniId }) {
           gap: 16,
         }}
       >
+        {/* University icon */}
+        <div style={{
+          width: 48, height: 48, borderRadius: "50%",
+          background: "rgba(99,102,241,0.12)",
+          border: "1px solid rgba(99,102,241,0.22)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "#818CF8",
+        }}>
+          {UNI_ICONS[uni]}
+        </div>
+
         {/* Ring with centered % */}
         <div style={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
           <svg width="100" height="100" style={{ transform: "rotate(-90deg)" }}>
@@ -684,7 +723,7 @@ export default function LandingPage() {
                   border: "1px solid var(--border)",
                   backgroundColor: "var(--bg-surface)",
                   textAlign: "left",
-                  transitionDelay: `${i * 150}ms`,
+                  transitionDelay: `${i * 120}ms`,
                   position: "relative",
                   zIndex: 1,
                 }}
