@@ -24,7 +24,7 @@ export const buildings: Building[] = [
     id: "dana-porter",
     name: "Dana Porter Library",
     shortName: "LIB",
-    coords: [43.4698, -80.5426],
+    coords: [43.4698, -80.5430],
     description: "Main humanities and social sciences library. Note: Floor 5 is permanently inaccessible to students.",
     studySpaces: [
       { floor: "Floors 6–9", name: "Individual Study Carrels", type: "individual", noiseLevel: "silent", keycardRequired: false, outlets: true, printer: false, bookingUrl: "https://lib.uwaterloo.ca/web/clickable-floor-plans", notes: "Consult clickable floor plans for exact locations" },
@@ -36,7 +36,7 @@ export const buildings: Building[] = [
     id: "davis-centre",
     name: "Davis Centre Library",
     shortName: "DC",
-    coords: [43.4730, -80.5421],
+    coords: [43.4732, -80.5425],
     description: "Engineering and computer science library inside the William G. Davis Computer Research Centre.",
     studySpaces: [
       { floor: "Main & Lower Floors", name: "Individual Study Carrels", type: "individual", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "" },
@@ -103,7 +103,7 @@ export const buildings: Building[] = [
     id: "needles-hall",
     name: "Needles Hall — The Centre",
     shortName: "NH",
-    coords: [43.4710, -80.5455],
+    coords: [43.4713, -80.5454],
     description: "Administrative and student services hub with first-come first-serve study rooms.",
     studySpaces: [
       { floor: "Floor 1", name: "Study Rooms (×6)", type: "individual", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "First-come, first-served. No booking required." },
@@ -113,7 +113,7 @@ export const buildings: Building[] = [
     id: "slc",
     name: "Student Life Centre",
     shortName: "SLC",
-    coords: [43.4714, -80.5467],
+    coords: [43.4726, -80.5453],
     description: "Student hub with food, services, and study space. Note: 1 study room currently closed for MC link construction.",
     studySpaces: [
       { floor: "Floor 3", name: "Quiet Study Room", type: "individual", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "Small portion (~20%) closed due to construction. Mostly open." },
@@ -145,7 +145,7 @@ export const buildings: Building[] = [
     id: "cph",
     name: "Carl A. Pollock Hall",
     shortName: "CPH",
-    coords: [43.4704, -80.5406],
+    coords: [43.4706, -80.5408],
     description: "Engineering building with classroom space and POETS lounge.",
     studySpaces: [
       { floor: "Floor 3", name: "Room 3613 (Classroom)", type: "classroom", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "Accessible when not in use for class" },
@@ -199,7 +199,7 @@ export const buildings: Building[] = [
     id: "qnc",
     name: "Quantum Nano Centre",
     shortName: "QNC",
-    coords: [43.4710, -80.5415],
+    coords: [43.4715, -80.5415],
     description: "Research building with beautiful atrium study spaces. Rarely crowded.",
     studySpaces: [
       { floor: "Various", name: "Single/Double Study Spaces", type: "individual", noiseLevel: "quiet", keycardRequired: false, outlets: true, printer: false, notes: "Quiet and rarely crowded" },
@@ -221,7 +221,7 @@ export const buildings: Building[] = [
     id: "mc",
     name: "Math & Computer Building",
     shortName: "MC",
-    coords: [43.4723, -80.5437],
+    coords: [43.4721, -80.5441],
     description: "Mathematics faculty building with computer labs, Math C&D, and study areas.",
     studySpaces: [
       { floor: "Floor 3", name: "Math Coffee & Donut Shop", type: "lounge", noiseLevel: "collaborative", keycardRequired: false, outlets: false, printer: false, notes: "Campus institution. Good for casual study between classes." },
