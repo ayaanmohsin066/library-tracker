@@ -3,28 +3,40 @@
 export function SkeletonCard() {
   return (
     <div
-      className="w-full rounded-2xl p-5 sm:p-6"
-      style={{
-        backgroundColor: "var(--bg-surface)",
-        border: "1px solid var(--border)",
-      }}
+      className="glass-card w-full p-5 sm:p-6"
+      style={{ minHeight: 180 }}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="h-5 w-40 rounded-full animate-shimmer" />
-        <div className="h-5 w-12 rounded-full animate-shimmer" />
+      {/* Header row */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+        <div className="animate-shimmer" style={{ height: 18, width: 160, borderRadius: 6 }} />
+        <div className="animate-shimmer" style={{ height: 36, width: 64, borderRadius: 6 }} />
       </div>
-      <div className="mt-2 h-3 w-28 rounded-full animate-shimmer" />
-      <div className="mt-4 h-1.5 w-full rounded-full animate-shimmer" />
-      <div className="mt-2 h-3 w-20 rounded-full animate-shimmer" />
+
+      {/* Status */}
+      <div className="animate-shimmer" style={{ marginTop: 10, height: 12, width: 120, borderRadius: 6 }} />
+
+      {/* Progress bar */}
+      <div className="animate-shimmer" style={{ marginTop: 16, height: 8, width: "100%", borderRadius: 9999 }} />
+
+      {/* People count */}
+      <div className="animate-shimmer" style={{ marginTop: 7, height: 11, width: 96, borderRadius: 6 }} />
+
+      {/* Floor rows */}
       <div
-        className="mt-5 space-y-3 pt-4"
-        style={{ borderTop: "1px solid var(--border)" }}
+        style={{
+          marginTop: 16,
+          paddingTop: 14,
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+        }}
       >
         {[1, 2, 3].map((i) => (
-          <div key={i} className="flex items-center gap-3">
-            <div className="h-3 w-28 rounded-full animate-shimmer" />
-            <div className="h-1.5 flex-1 rounded-full animate-shimmer" />
-            <div className="h-5 w-10 rounded-full animate-shimmer" />
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div className="animate-shimmer" style={{ height: 11, width: 96, borderRadius: 6, flexShrink: 0 }} />
+            <div className="animate-shimmer" style={{ height: 8, flex: 1, borderRadius: 9999 }} />
+            <div className="animate-shimmer" style={{ height: 20, width: 38, borderRadius: 9999, flexShrink: 0 }} />
           </div>
         ))}
       </div>

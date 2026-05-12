@@ -6,26 +6,26 @@
    Design tokens — LUMEN HUB palette
    ══════════════════════════════════════════════════ */
 :root {
-  --bg-base:      #111318;
-  --bg-surface:   #1e2024;
-  --bg-elevated:  #282a2e;
+  --bg-base:      #0A0F1C;
+  --bg-surface:   #0D1424;
+  --bg-elevated:  #1E2A3A;
   --bg-overlay:   rgba(255, 255, 255, 0.03);
 
-  --border:        rgba(59, 73, 75, 0.4);
-  --border-strong: rgba(59, 73, 75, 0.7);
+  --border:        rgba(30, 58, 95, 0.5);
+  --border-strong: rgba(30, 58, 95, 0.85);
 
   --text-primary:   #e2e2e8;
   --text-secondary: #b9cacb;
-  --text-muted:     #849495;
+  --text-muted:     #6B7FA3;
 
-  --accent:       #00dbe9;
-  --accent-hover: #7df4ff;
-  --accent-dim:   rgba(0, 219, 233, 0.12);
-  --accent-glow:  rgba(0, 219, 233, 0.28);
+  --accent:       #6366F1;
+  --accent-hover: #818CF8;
+  --accent-dim:   rgba(99, 102, 241, 0.12);
+  --accent-glow:  rgba(99, 102, 241, 0.28);
 
-  --green:      #2ae500;
-  --green-dim:  rgba(42, 229, 0, 0.12);
-  --green-glow: rgba(42, 229, 0, 0.35);
+  --green:      #34D399;
+  --green-dim:  rgba(52, 211, 153, 0.12);
+  --green-glow: rgba(52, 211, 153, 0.35);
 
   --amber:      #f59e0b;
   --amber-dim:  rgba(245, 158, 11, 0.12);
@@ -35,12 +35,12 @@
   --red-dim:  rgba(255, 180, 171, 0.12);
   --red-glow: rgba(255, 180, 171, 0.35);
 
-  --card-glow-green: 0 0 56px -6px rgba(42, 229, 0, 0.3);
+  --card-glow-green: 0 0 56px -6px rgba(52, 211, 153, 0.3);
   --card-glow-amber: 0 0 56px -6px rgba(245, 158, 11, 0.3);
   --card-glow-red:   0 0 56px -6px rgba(255, 180, 171, 0.3);
-  --card-glow-cyan:  0 0 56px -6px rgba(0, 219, 233, 0.3);
+  --card-glow-cyan:  0 0 56px -6px rgba(99, 102, 241, 0.3);
 
-  --num-glow-green: 0 0 18px rgba(42, 229, 0, 0.7),   0 0 36px rgba(42, 229, 0, 0.3);
+  --num-glow-green: 0 0 18px rgba(52, 211, 153, 0.7),  0 0 36px rgba(52, 211, 153, 0.3);
   --num-glow-amber: 0 0 18px rgba(245, 158, 11, 0.7),  0 0 36px rgba(245, 158, 11, 0.3);
   --num-glow-red:   0 0 18px rgba(255, 180, 171, 0.7), 0 0 36px rgba(255, 180, 171, 0.3);
 
@@ -60,6 +60,11 @@ body {
   color: var(--text-primary);
   font-family: "Sora", var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Force navy background on html as well to prevent flash */
+html {
+  background-color: #0A0F1C;
 }
 
 /* ══════════════════════════════════════════════════
@@ -92,20 +97,20 @@ body {
   100% { transform: scale(2.4); opacity: 0; }
 }
 
-@keyframes breathe-mint {
-  0%, 100% { box-shadow: 0 0 5px rgba(42, 229, 0, 0.2); }
-  50%       { box-shadow: 0 0 15px rgba(42, 229, 0, 0.5); }
+@keyframes breathe-emerald {
+  0%, 100% { box-shadow: 0 0 5px rgba(52, 211, 153, 0.2); }
+  50%       { box-shadow: 0 0 15px rgba(52, 211, 153, 0.5); }
 }
 
-@keyframes breathe-blue {
-  0%, 100% { box-shadow: 0 0 5px rgba(0, 219, 233, 0.2); }
-  50%       { box-shadow: 0 0 15px rgba(0, 219, 233, 0.5); }
+@keyframes breathe-indigo {
+  0%, 100% { box-shadow: 0 0 5px rgba(99, 102, 241, 0.2); }
+  50%       { box-shadow: 0 0 15px rgba(99, 102, 241, 0.5); }
 }
 
 @keyframes pulse-ring {
-  0%   { transform: scale(0.95); box-shadow: 0 0 0 0    rgba(125, 244, 255, 0.7); }
-  70%  { transform: scale(1);    box-shadow: 0 0 0 10px rgba(125, 244, 255, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0    rgba(125, 244, 255, 0); }
+  0%   { transform: scale(0.95); box-shadow: 0 0 0 0    rgba(129, 140, 248, 0.7); }
+  70%  { transform: scale(1);    box-shadow: 0 0 0 10px rgba(129, 140, 248, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0    rgba(129, 140, 248, 0); }
 }
 
 /* ══════════════════════════════════════════════════
@@ -131,22 +136,22 @@ body {
 
   /* ── LUMEN HUB: full glass panel ─────────────── */
   .glass-panel {
-    background: rgba(18, 20, 24, 0.6);
+    background: rgba(10, 15, 28, 0.7);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: inset 0px 0px 20px rgba(0, 219, 233, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0px 0px 20px rgba(99, 102, 241, 0.05);
   }
 
   /* ── LUMEN HUB: card-style glass (darker) ────── */
   .glass-card {
-    background: rgba(30, 32, 36, 0.7);
+    background: rgba(13, 20, 36, 0.75);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-top: 1px solid rgba(255, 255, 255, 0.15);
-    border-left: 1px solid rgba(255, 255, 255, 0.1);
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 1px solid rgba(255, 255, 255, 0.07);
+    border-right: 1px solid rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     border-radius: 1.25rem;
     position: relative;
     transition: border-color 250ms ease, box-shadow 250ms ease;
@@ -163,8 +168,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 3px;
-    background: rgba(30, 32, 36, 0.7);
-    border: 1px solid rgba(59, 73, 75, 0.5);
+    background: rgba(13, 20, 36, 0.7);
+    border: 1px solid rgba(30, 58, 95, 0.5);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-radius: 0.875rem;
@@ -172,7 +177,7 @@ body {
     transition: border-color 200ms ease;
   }
   .stat-chip:hover {
-    border-color: rgba(0, 219, 233, 0.3);
+    border-color: rgba(99, 102, 241, 0.3);
   }
 
   /* ── Glow progress bar track ─────────────────── */
@@ -181,13 +186,13 @@ body {
     width: 100%;
     overflow: hidden;
     border-radius: 9999px;
-    background: rgba(59, 73, 75, 0.4);
+    background: rgba(30, 58, 95, 0.4);
   }
 
   .bar-fill-green {
     height: 100%;
     border-radius: 9999px;
-    background: linear-gradient(90deg, #1eb300, #2ae500, #5ef23c);
+    background: linear-gradient(90deg, #059669, #34D399, #6EE7B7);
     box-shadow: 0 0 14px var(--green-glow), 0 0 4px var(--green-glow);
     transition: width 0.65s cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -214,11 +219,11 @@ body {
   }
 
   /* ── Status breathing indicators ─────────────── */
-  .breathing-mint {
-    animation: breathe-mint 3s ease-in-out infinite;
+  .breathing-emerald {
+    animation: breathe-emerald 3s ease-in-out infinite;
   }
-  .breathing-blue {
-    animation: breathe-blue 3s ease-in-out infinite;
+  .breathing-indigo {
+    animation: breathe-indigo 3s ease-in-out infinite;
   }
 
   /* ── Live pulse dot ──────────────────────────── */

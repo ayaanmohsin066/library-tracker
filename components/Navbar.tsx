@@ -6,199 +6,131 @@ import { usePathname } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const NAV_LINKS = [
-  { href: "/waterloo", label: "Waterloo" },
-  { href: "/regina",   label: "Regina"   },
-  { href: "/uoft",     label: "UofT"     },
-  { href: "/labs",     label: "Labs"     },
-  { href: "/map",      label: "Map"      },
+  { href: "/waterloo", label: "Dashboard" },
+  { href: "/map",      label: "Map"       },
+  { href: "/labs",     label: "Labs"      },
 ];
-
-const LOGO_STYLE: React.CSSProperties = {
-  fontSize: "1.1rem",
-  fontWeight: 800,
-  letterSpacing: "-0.02em",
-  textDecoration: "none",
-  background: "linear-gradient(135deg, #06b6d4 0%, #818cf8 100%)",
-  WebkitBackgroundClip: "text",
-  WebkitTextFillColor: "transparent",
-  backgroundClip: "text",
-};
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  const close = () => setOpen(false);
+  const isActive = (href: string) =>
+    pathname === href || (href === "/waterloo" && pathname === "/");
 
   return (
     <>
-      {/* ── Bar ─────────────────────────────────────────────────── */}
-      <nav
-        className="fixed inset-x-0 top-0 z-50 flex h-[60px] items-center justify-between px-5 sm:px-8"
-        style={{
-          backgroundColor: "rgba(10,10,15,0.72)",
-          backdropFilter: "blur(18px) saturate(180%)",
-          WebkitBackdropFilter: "blur(18px) saturate(180%)",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-        }}
+      {/* ── Fixed top bar ─────────────────────────────────────────── */}
+      <header
+        className="fixed top-0 left-0 right-0 z-50 h-16 glass-panel flex items-center px-4 sm:px-6 lg:px-8"
+        style={{ borderBottom: "1px solid rgba(59, 73, 75, 0.2)" }}
       >
         {/* Logo */}
-        <Link href="/" style={LOGO_STYLE}>
-          LibraryCheck
+        <Link
+          href="/"
+          className="flex-shrink-0 no-underline"
+          style={{ fontFamily: "Sora, sans-serif" }}
+        >
+          <span
+            className="text-xl font-bold tracking-tighter"
+            style={{ color: "#6366F1" }}
+          >
+            LibraryCheck
+          </span>
         </Link>
 
-        {/* Desktop: nav links + theme toggle */}
-        <div className="hidden items-center gap-1 sm:flex">
+        {/* Desktop center nav */}
+        <nav className="hidden md:flex flex-1 items-center justify-center gap-1">
           {NAV_LINKS.map(({ href, label }) => {
-            const active = pathname === href;
+            const active = isActive(href);
             return (
               <Link
                 key={href}
                 href={href}
+                className="relative px-4 py-2 text-sm font-medium no-underline transition-colors"
                 style={{
-                  padding: "6px 14px",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  textDecoration: "none",
-                  color: active ? "#fff" : "var(--text-secondary)",
-                  backgroundColor: active ? "var(--accent)" : "transparent",
-                  boxShadow: active ? "0 0 14px var(--accent-glow)" : "none",
-                  transition: "color 150ms ease, background-color 150ms ease",
+                  color: active ? "#6366F1" : "#b9cacb",
+                  fontFamily: "Sora, sans-serif",
                 }}
               >
                 {label}
+                {/* Active accent underline */}
+                {active && (
+                  <span
+                    className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full"
+                    style={{
+                      height: 2,
+                      width: "60%",
+                      background: "linear-gradient(90deg, transparent, #6366F1, transparent)",
+                    }}
+                  />
+                )}
               </Link>
             );
           })}
-          <div style={{ marginLeft: "8px" }}>
-            <ThemeToggle />
-          </div>
-        </div>
+        </nav>
 
-        {/* Mobile: theme toggle + hamburger */}
-        <div className="flex items-center gap-3 sm:hidden">
+        {/* Right side: theme toggle + mobile hamburger */}
+        <div className="flex items-center gap-2 ml-auto md:ml-0">
           <ThemeToggle />
+
           <button
-            onClick={() => setOpen(true)}
-            aria-label="Open menu"
+            onClick={() => setOpen((v) => !v)}
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg transition-colors"
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 36,
-              height: 36,
-              borderRadius: "8px",
-              backgroundColor: "var(--bg-elevated)",
-              border: "1px solid var(--border)",
-              color: "var(--text-secondary)",
+              background: "rgba(59, 73, 75, 0.25)",
+              border: "1px solid rgba(59, 73, 75, 0.4)",
+              color: "#b9cacb",
               cursor: "pointer",
-              flexShrink: 0,
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-              <line x1="2" y1="4.5" x2="16" y2="4.5" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
-              <line x1="2" y1="9"   x2="16" y2="9"   stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
-              <line x1="2" y1="13.5" x2="16" y2="13.5" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
-            </svg>
+            {open ? (
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
+                <line x1="14" y1="2" x2="2"  y2="14" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <line x1="2" y1="4"  x2="14" y2="4"  stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" />
+                <line x1="2" y1="8"  x2="14" y2="8"  stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" />
+                <line x1="2" y1="12" x2="14" y2="12" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" />
+              </svg>
+            )}
           </button>
         </div>
-      </nav>
+      </header>
 
-      {/* ── Mobile drawer ───────────────────────────────────────── */}
-      {/* Scrim */}
+      {/* ── Mobile slide-down drawer ───────────────────────────────── */}
       <div
-        onClick={close}
-        aria-hidden="true"
+        className="fixed left-0 right-0 z-40 md:hidden overflow-hidden"
         style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 60,
-          backgroundColor: "rgba(0,0,0,0.5)",
-          backdropFilter: "blur(2px)",
-          WebkitBackdropFilter: "blur(2px)",
+          top: 64,
+          maxHeight: open ? 220 : 0,
           opacity: open ? 1 : 0,
+          transition: "max-height 280ms cubic-bezier(0.4,0,0.2,1), opacity 200ms ease",
           pointerEvents: open ? "auto" : "none",
-          transition: "opacity 250ms ease",
-        }}
-      />
-
-      {/* Panel */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Navigation menu"
-        style={{
-          position: "fixed",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: "min(280px, 80vw)",
-          zIndex: 70,
-          backgroundColor: "var(--bg-elevated)",
-          borderLeft: "1px solid var(--border)",
-          display: "flex",
-          flexDirection: "column",
-          padding: "20px",
-          transform: open ? "translateX(0)" : "translateX(100%)",
-          transition: "transform 300ms cubic-bezier(0.4,0,0.2,1)",
-          boxShadow: "-24px 0 60px rgba(0,0,0,0.4)",
+          background: "rgba(17, 19, 24, 0.97)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderBottom: open ? "1px solid rgba(59, 73, 75, 0.3)" : "none",
         }}
       >
-        {/* Drawer header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "36px",
-          }}
-        >
-          <Link href="/" onClick={close} style={LOGO_STYLE}>
-            LibraryCheck
-          </Link>
-          <button
-            onClick={close}
-            aria-label="Close menu"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 34,
-              height: 34,
-              borderRadius: "8px",
-              backgroundColor: "var(--bg-surface)",
-              border: "1px solid var(--border)",
-              color: "var(--text-secondary)",
-              cursor: "pointer",
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <line x1="3" y1="3" x2="13" y2="13" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
-              <line x1="13" y1="3" x2="3" y2="13" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Drawer links */}
-        <nav style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+        <nav className="flex flex-col px-4 py-3 gap-1">
           {NAV_LINKS.map(({ href, label }) => {
-            const active = pathname === href;
+            const active = isActive(href);
             return (
               <Link
                 key={href}
                 href={href}
-                onClick={close}
+                onClick={() => setOpen(false)}
+                className="flex items-center px-4 py-3 rounded-xl text-sm font-medium no-underline transition-colors"
                 style={{
-                  padding: "12px 16px",
-                  borderRadius: "10px",
-                  fontSize: "15px",
-                  fontWeight: 600,
-                  textDecoration: "none",
-                  color: active ? "#fff" : "var(--text-primary)",
-                  backgroundColor: active ? "var(--accent)" : "transparent",
-                  boxShadow: active ? "0 0 14px var(--accent-glow)" : "none",
-                  transition: "background-color 150ms ease",
+                  color: active ? "#6366F1" : "#b9cacb",
+                  background: active ? "rgba(99, 102, 241, 0.08)" : "transparent",
+                  borderLeft: `3px solid ${active ? "#6366F1" : "transparent"}`,
+                  fontFamily: "Sora, sans-serif",
                 }}
               >
                 {label}
@@ -207,6 +139,16 @@ export default function Navbar() {
           })}
         </nav>
       </div>
+
+      {/* Scrim — closes drawer on outside tap */}
+      {open && (
+        <div
+          className="fixed inset-0 z-30 md:hidden"
+          style={{ top: 64 }}
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      )}
     </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface SubLocation {
   name: string;
@@ -30,6 +30,24 @@ function level(pct: number): Level {
   return "low";
 }
 
+const STATUS_COLOR: Record<Level, string> = {
+  low:    "var(--green)",
+  medium: "var(--amber)",
+  high:   "var(--red)",
+};
+
+const NUM_GLOW: Record<Level, string> = {
+  low:    "var(--num-glow-green)",
+  medium: "var(--num-glow-amber)",
+  high:   "var(--num-glow-red)",
+};
+
+const CARD_GLOW: Record<Level, string> = {
+  low:    "var(--card-glow-green)",
+  medium: "var(--card-glow-amber)",
+  high:   "var(--card-glow-red)",
+};
+
 const BADGE_STYLE: Record<Level, React.CSSProperties> = {
   low:    { color: "var(--green)", backgroundColor: "var(--green-dim)", border: "1px solid rgba(16,185,129,0.2)" },
   medium: { color: "var(--amber)", backgroundColor: "var(--amber-dim)", border: "1px solid rgba(245,158,11,0.2)" },
@@ -42,24 +60,22 @@ const BAR_CLASS: Record<Level, string> = {
   high:   "bar-fill-red",
 };
 
-// Slab backgrounds: normal (18%) and hover/selected (35%)
 const FLOOR_BG: Record<Level, string> = {
-  low:    "rgba(16,185,129,0.18)",
-  medium: "rgba(245,158,11,0.18)",
-  high:   "rgba(239,68,68,0.18)",
+  low:    "rgba(16,185,129,0.14)",
+  medium: "rgba(245,158,11,0.14)",
+  high:   "rgba(239,68,68,0.14)",
 };
 
 const FLOOR_BG_ACTIVE: Record<Level, string> = {
-  low:    "rgba(16,185,129,0.35)",
-  medium: "rgba(245,158,11,0.35)",
-  high:   "rgba(239,68,68,0.35)",
+  low:    "rgba(16,185,129,0.3)",
+  medium: "rgba(245,158,11,0.3)",
+  high:   "rgba(239,68,68,0.3)",
 };
 
-// Bottom edge "thickness" — darker shade of same color
 const FLOOR_DEPTH: Record<Level, string> = {
-  low:    "rgba(16,185,129,0.55)",
-  medium: "rgba(245,158,11,0.55)",
-  high:   "rgba(239,68,68,0.55)",
+  low:    "rgba(16,185,129,0.5)",
+  medium: "rgba(245,158,11,0.5)",
+  high:   "rgba(239,68,68,0.5)",
 };
 
 const FLOOR_TEXT: Record<Level, string> = {
@@ -67,17 +83,6 @@ const FLOOR_TEXT: Record<Level, string> = {
   medium: "var(--amber)",
   high:   "var(--red)",
 };
-
-function Badge({ pct }: { pct: number }) {
-  return (
-    <span
-      className="inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums"
-      style={BADGE_STYLE[level(pct)]}
-    >
-      {Math.round(pct * 100)}%
-    </span>
-  );
-}
 
 function GlowBar({ pct }: { pct: number }) {
   const clamped = Math.min(1, Math.max(0, pct));
@@ -89,6 +94,7 @@ function GlowBar({ pct }: { pct: number }) {
 }
 
 function SubLocRow({ loc }: { loc: SubLocation }) {
+  const lv = level(loc.percentage);
   return (
     <div className="flex items-center gap-3">
       <span
@@ -100,7 +106,12 @@ function SubLocRow({ loc }: { loc: SubLocation }) {
       <div className="flex-1">
         <GlowBar pct={loc.percentage} />
       </div>
-      <Badge pct={loc.percentage} />
+      <span
+        className="inline-block rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums shrink-0"
+        style={BADGE_STYLE[lv]}
+      >
+        {Math.round(loc.percentage * 100)}%
+      </span>
     </div>
   );
 }
@@ -119,9 +130,11 @@ export default function LibraryCard({
   const [showStack, setShowStack] = useState(false);
   const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
   const [hoveredFloor, setHoveredFloor] = useState<string | null>(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const safeSubLocs = Array.isArray(subLocs) ? subLocs : [];
-  // Reverse so index 0 = top of building (highest floor), last = ground floor
   const stackedFloors = [...safeSubLocs].reverse();
   const totalFloors = stackedFloors.length;
   const showFloorBtn = hasFloorStack === true && safeSubLocs.length > 0;
@@ -130,60 +143,186 @@ export default function LibraryCard({
     ? stackedFloors.find((f) => f.name === selectedFloor) ?? null
     : null;
 
+  const lv = level(percentage);
+  const pct = Math.round(percentage * 100);
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = cardRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const cx = (e.clientX - rect.left) / rect.width - 0.5;
+    const cy = (e.clientY - rect.top) / rect.height - 0.5;
+    setTilt({ x: cy * -7, y: cx * 7 });
+  }
+
+  function handleMouseEnter() {
+    setIsHovered(true);
+  }
+
+  function handleMouseLeave() {
+    setTilt({ x: 0, y: 0 });
+    setIsHovered(false);
+  }
+
+  const cardGlow = isOpen ? CARD_GLOW[lv] : "none";
+  const cardTransform = `perspective(900px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) translateY(${isHovered ? "-4px" : "0px"})`;
+
   return (
-    <div className="card-base w-full p-5 sm:p-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-2">
+    <div
+      ref={cardRef}
+      className="glass-card w-full p-5 sm:p-6 cursor-default"
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        transform: cardTransform,
+        transition: isHovered
+          ? "transform 80ms ease, box-shadow 250ms ease, border-color 250ms ease"
+          : "transform 320ms ease, box-shadow 250ms ease, border-color 250ms ease",
+        boxShadow: isHovered && isOpen
+          ? `${cardGlow}, 0 20px 60px rgba(0,0,0,0.55)`
+          : isOpen
+          ? `${cardGlow}, 0 4px 24px rgba(0,0,0,0.3)`
+          : "0 4px 16px rgba(0,0,0,0.25)",
+        borderColor: isHovered ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.065)",
+        willChange: "transform",
+      }}
+    >
+      {/* ── Header: name + large % ─────────────────────────────── */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
         <h2
-          className="text-base font-semibold leading-tight sm:text-lg"
-          style={{ color: "var(--text-primary)" }}
+          style={{
+            fontSize: "clamp(0.95rem, 1.8vw, 1.1rem)",
+            fontWeight: 700,
+            color: "var(--text-primary)",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.25,
+            flex: 1,
+          }}
         >
           {name}
         </h2>
-        <Badge pct={percentage} />
+
+        {/* Large glowing percentage */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", flexShrink: 0 }}>
+          <span
+            style={{
+              fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
+              fontSize: "clamp(1.75rem, 3.5vw, 2.25rem)",
+              fontWeight: 800,
+              letterSpacing: "-0.04em",
+              lineHeight: 1,
+              color: isOpen ? STATUS_COLOR[lv] : "var(--text-muted)",
+              textShadow: isOpen ? NUM_GLOW[lv] : "none",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {pct}%
+          </span>
+          <span
+            style={{
+              fontSize: 9,
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              color: "var(--text-muted)",
+              marginTop: 2,
+            }}
+          >
+            occupied
+          </span>
+        </div>
       </div>
 
-      {/* Status */}
-      <p className="mt-2 text-xs font-medium">
-        {isOpen
-          ? <span style={{ color: "var(--green)" }}>● Open · {hourSummary}</span>
-          : <span style={{ color: "var(--red)" }}>● Closed · {hourSummary}</span>
-        }
+      {/* ── Status line ────────────────────────────────────────── */}
+      <p style={{ marginTop: 8, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 5 }}>
+        {isOpen ? (
+          <>
+            <span
+              style={{
+                display: "inline-block",
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                backgroundColor: "var(--green)",
+                boxShadow: "0 0 6px var(--green-glow)",
+                flexShrink: 0,
+              }}
+            />
+            <span style={{ color: "var(--green)" }}>Open</span>
+            <span style={{ color: "var(--text-muted)" }}>·</span>
+            <span style={{ color: "var(--text-secondary)" }}>{hourSummary}</span>
+          </>
+        ) : (
+          <>
+            <span
+              style={{
+                display: "inline-block",
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                backgroundColor: "var(--red)",
+                flexShrink: 0,
+              }}
+            />
+            <span style={{ color: "var(--red)" }}>Closed</span>
+            <span style={{ color: "var(--text-muted)" }}>·</span>
+            <span style={{ color: "var(--text-secondary)" }}>{hourSummary}</span>
+          </>
+        )}
       </p>
 
       {compareSummary && (
-        <p className="mt-0.5 text-xs italic" style={{ color: "var(--text-muted)" }}>
+        <p style={{ marginTop: 3, fontSize: 11, fontStyle: "italic", color: "var(--text-muted)" }}>
           {compareSummary}
         </p>
       )}
 
-      {/* Progress */}
-      <div className="mt-3">
+      {/* ── Progress bar ───────────────────────────────────────── */}
+      <div style={{ marginTop: 14 }}>
         <GlowBar pct={percentage} />
       </div>
-      <p className="mt-1.5 text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
-        {people} / {capacity} people
+      <p
+        style={{
+          marginTop: 6,
+          fontSize: 11.5,
+          fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
+          color: "var(--text-muted)",
+          letterSpacing: "-0.01em",
+        }}
+      >
+        {people.toLocaleString()} / {capacity.toLocaleString()} people
       </p>
 
-      {/* Sub-locations */}
+      {/* ── Sub-locations (floors) ─────────────────────────────── */}
       {safeSubLocs.length > 0 && (
         <div
-          className="mt-4 space-y-2.5 pt-4"
-          style={{ borderTop: "1px solid var(--border)" }}
+          style={{
+            marginTop: 16,
+            paddingTop: 14,
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+          }}
         >
           <p
-            className="text-[10px] font-semibold uppercase tracking-widest"
-            style={{ color: "var(--text-muted)" }}
+            style={{
+              fontSize: 9.5,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              color: "var(--text-muted)",
+              marginBottom: 10,
+            }}
           >
             By floor
           </p>
-          {safeSubLocs.map((loc) => (
-            <SubLocRow key={loc.name} loc={loc} />
-          ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {safeSubLocs.map((loc) => (
+              <SubLocRow key={loc.name} loc={loc} />
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Floor Stack Toggle Button */}
+      {/* ── Floor stack toggle ─────────────────────────────────── */}
       {showFloorBtn && (
         <button
           onClick={() => {
@@ -191,23 +330,25 @@ export default function LibraryCard({
             setSelectedFloor(null);
           }}
           style={{
-            marginTop: "16px",
+            marginTop: 16,
             width: "100%",
             padding: "9px 0",
             borderRadius: "10px",
-            border: "1px solid var(--accent)",
-            backgroundColor: "transparent",
+            border: "1px solid rgba(6,182,212,0.3)",
+            backgroundColor: showStack ? "rgba(6,182,212,0.1)" : "transparent",
             color: "var(--accent)",
-            fontSize: "13px",
+            fontSize: "12.5px",
             fontWeight: 600,
             cursor: "pointer",
+            letterSpacing: "-0.01em",
+            transition: "background-color 150ms ease, border-color 150ms ease",
           }}
         >
           {showStack ? "Hide Floor View" : "View Floor Plan →"}
         </button>
       )}
 
-      {/* 3D Building Visualization */}
+      {/* ── 3D Floor stack visualization ──────────────────────── */}
       {showFloorBtn && (
         <div
           style={{
@@ -219,44 +360,34 @@ export default function LibraryCard({
         >
           <div
             style={{
-              marginTop: "12px",
-              padding: "14px",
-              borderRadius: "12px",
-              backgroundColor: "var(--bg-elevated)",
-              border: "1px solid var(--border)",
+              marginTop: 12,
+              padding: 14,
+              borderRadius: 12,
+              backgroundColor: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.06)",
             }}
           >
-            {/* Container header */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: "14px",
-              }}
-            >
+            {/* Section header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
               <span
                 style={{
-                  fontSize: "11px",
+                  fontSize: 10,
                   fontWeight: 700,
                   textTransform: "uppercase",
-                  letterSpacing: "0.08em",
+                  letterSpacing: "0.1em",
                   color: "var(--text-muted)",
                 }}
               >
                 {name} — Floor Overview
               </span>
               <button
-                onClick={() => {
-                  setShowStack(false);
-                  setSelectedFloor(null);
-                }}
+                onClick={() => { setShowStack(false); setSelectedFloor(null); }}
                 style={{
                   background: "none",
                   border: "none",
                   cursor: "pointer",
                   color: "var(--text-muted)",
-                  fontSize: "12px",
+                  fontSize: 11.5,
                   padding: "2px 6px",
                 }}
               >
@@ -264,28 +395,21 @@ export default function LibraryCard({
               </button>
             </div>
 
-            {/* Building slabs — top of container = highest floor */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            {/* Building slabs */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {stackedFloors.map((floor, i) => {
                 const lv = level(floor.percentage);
                 const isHov = hoveredFloor === floor.name;
                 const isSel = selectedFloor === floor.name;
-                // Perspective taper: top floor (i=0) is narrowest, ground floor is widest
-                const widthPct =
-                  totalFloors > 1 ? 94 + (i / (totalFloors - 1)) * 6 : 100;
+                const widthPct = totalFloors > 1 ? 94 + (i / (totalFloors - 1)) * 6 : 100;
 
                 return (
-                  <div
-                    key={floor.name}
-                    style={{ display: "flex", justifyContent: "center" }}
-                  >
+                  <div key={floor.name} style={{ display: "flex", justifyContent: "center" }}>
                     <div
                       role="button"
                       tabIndex={0}
                       aria-pressed={isSel}
-                      onClick={() =>
-                        setSelectedFloor(isSel ? null : floor.name)
-                      }
+                      onClick={() => setSelectedFloor(isSel ? null : floor.name)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
@@ -297,34 +421,25 @@ export default function LibraryCard({
                       style={{
                         width: `${widthPct}%`,
                         height: "44px",
-                        borderRadius: "4px",
-                        backgroundColor:
-                          isHov || isSel
-                            ? FLOOR_BG_ACTIVE[lv]
-                            : FLOOR_BG[lv],
-                        // Bottom edge simulates slab thickness
+                        borderRadius: "5px",
+                        backgroundColor: isHov || isSel ? FLOOR_BG_ACTIVE[lv] : FLOOR_BG[lv],
                         borderBottom: `4px solid ${FLOOR_DEPTH[lv]}`,
-                        outline: isSel
-                          ? `1px solid ${FLOOR_DEPTH[lv]}`
-                          : "none",
+                        outline: isSel ? `1px solid ${FLOOR_DEPTH[lv]}` : "none",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        paddingLeft: "12px",
-                        paddingRight: "12px",
+                        paddingLeft: 12,
+                        paddingRight: 12,
                         cursor: "pointer",
                         transform: isHov ? "translateY(-5px)" : "translateY(0)",
-                        boxShadow: isHov
-                          ? `0 8px 20px ${FLOOR_DEPTH[lv]}`
-                          : "none",
-                        transition:
-                          "transform 180ms ease, background-color 150ms ease, box-shadow 180ms ease",
+                        boxShadow: isHov ? `0 8px 20px ${FLOOR_DEPTH[lv]}` : "none",
+                        transition: "transform 180ms ease, background-color 150ms ease, box-shadow 180ms ease",
                         userSelect: "none",
                       }}
                     >
                       <span
                         style={{
-                          fontSize: "12px",
+                          fontSize: 12,
                           color: "var(--text-secondary)",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -336,9 +451,10 @@ export default function LibraryCard({
                       </span>
                       <span
                         style={{
-                          fontSize: "13px",
+                          fontSize: 13,
                           fontWeight: 700,
                           fontVariantNumeric: "tabular-nums",
+                          fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
                           color: FLOOR_TEXT[lv],
                           flexShrink: 0,
                         }}
@@ -351,45 +467,32 @@ export default function LibraryCard({
               })}
             </div>
 
-            {/* Selected floor info — appears below the building, not inline */}
+            {/* Selected floor detail */}
             {selectedFloorData && (
               <div
                 style={{
-                  marginTop: "12px",
+                  marginTop: 12,
                   padding: "10px 14px",
-                  borderRadius: "8px",
-                  backgroundColor: "var(--bg-surface)",
+                  borderRadius: 8,
+                  backgroundColor: "rgba(255,255,255,0.03)",
                   border: `1px solid ${FLOOR_DEPTH[level(selectedFloorData.percentage)]}`,
                 }}
               >
-                <p
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    color: "var(--text-primary)",
-                    marginBottom: "4px",
-                  }}
-                >
+                <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }}>
                   {selectedFloorData.name}
                 </p>
                 <p
                   style={{
-                    fontSize: "12px",
+                    fontSize: 12,
                     color: "var(--text-muted)",
+                    fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
                     fontVariantNumeric: "tabular-nums",
-                    marginBottom: "4px",
+                    marginBottom: 4,
                   }}
                 >
                   {selectedFloorData.people} / {selectedFloorData.capacity} people
                 </p>
-                <p
-                  style={{
-                    fontSize: "12px",
-                    color: selectedFloorData.isOpen
-                      ? "var(--green)"
-                      : "var(--red)",
-                  }}
-                >
+                <p style={{ fontSize: 12, color: selectedFloorData.isOpen ? "var(--green)" : "var(--red)" }}>
                   {selectedFloorData.isOpen ? "● Open" : "● Closed"}
                 </p>
               </div>
