@@ -176,20 +176,24 @@ function Panel({
     ? {
         position: "fixed", left: 0, right: 0, bottom: 0,
         maxHeight: "65vh", zIndex: 1000,
-        backgroundColor: "var(--bg-elevated)",
-        borderTop: "1px solid var(--border)",
+        background: "rgba(18, 20, 24, 0.92)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderTop: "1px solid rgba(0, 219, 233, 0.15)",
         borderRadius: "20px 20px 0 0",
         overflowY: "auto",
-        boxShadow: "0 -8px 40px rgba(0,0,0,0.45)",
+        boxShadow: "0 -8px 40px rgba(0,0,0,0.6), inset 0 0 20px rgba(0,219,233,0.05)",
         animation: "lc-slideUp 240ms cubic-bezier(0.4,0,0.2,1) forwards",
       }
     : {
-        position: "fixed", top: 60, right: 0, bottom: 0,
+        position: "fixed", top: 80, right: 0, bottom: 0,
         width: 360, zIndex: 1000,
-        backgroundColor: "var(--bg-elevated)",
-        borderLeft: "1px solid var(--border)",
+        background: "rgba(18, 20, 24, 0.92)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderLeft: "1px solid rgba(0, 219, 233, 0.15)",
         overflowY: "auto",
-        boxShadow: "-8px 0 40px rgba(0,0,0,0.35)",
+        boxShadow: "-8px 0 40px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,219,233,0.05)",
         animation: "lc-slideRight 240ms cubic-bezier(0.4,0,0.2,1) forwards",
       };
 
@@ -316,13 +320,15 @@ export default function CampusMap() {
           position: "absolute", bottom: 28, left: "50%",
           transform: "translateX(-50%)",
           zIndex: 500, pointerEvents: "none",
-          backgroundColor: "rgba(10,10,15,0.82)",
-          backdropFilter: "blur(14px)",
-          WebkitBackdropFilter: "blur(14px)",
-          border: "1px solid rgba(255,255,255,0.07)",
+          background: "rgba(18,20,24,0.88)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          border: "1px solid rgba(0,219,233,0.2)",
+          boxShadow: "inset 0 0 16px rgba(0,219,233,0.05)",
           borderRadius: 12, padding: "8px 18px",
-          fontSize: 13, fontWeight: 500, color: "var(--text-secondary)",
+          fontSize: 13, fontWeight: 500, color: "#b9cacb",
           whiteSpace: "nowrap",
+          fontFamily: "Sora, sans-serif",
         }}>
           Click any building to see available study spaces
         </div>

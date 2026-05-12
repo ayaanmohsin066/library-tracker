@@ -3,81 +3,53 @@
 @tailwind utilities;
 
 /* ══════════════════════════════════════════════════
-   Design tokens — dark mode (default)
+   Design tokens — LUMEN HUB palette
    ══════════════════════════════════════════════════ */
 :root {
-  --bg-base:      #0a0a0f;
-  --bg-surface:   #111118;
-  --bg-elevated:  #1c1c2a;
-  --bg-overlay:   rgba(255, 255, 255, 0.04);
+  --bg-base:      #111318;
+  --bg-surface:   #1e2024;
+  --bg-elevated:  #282a2e;
+  --bg-overlay:   rgba(255, 255, 255, 0.03);
 
-  --border:        rgba(255, 255, 255, 0.07);
-  --border-strong: rgba(255, 255, 255, 0.14);
+  --border:        rgba(59, 73, 75, 0.4);
+  --border-strong: rgba(59, 73, 75, 0.7);
 
-  --text-primary:   #e2e8f0;
-  --text-secondary: #94a3b8;
-  --text-muted:     #4a5568;
+  --text-primary:   #e2e2e8;
+  --text-secondary: #b9cacb;
+  --text-muted:     #849495;
 
-  --accent:       #06b6d4;
-  --accent-hover: #0891b2;
-  --accent-dim:   rgba(6, 182, 212, 0.12);
-  --accent-glow:  rgba(6, 182, 212, 0.28);
+  --accent:       #00dbe9;
+  --accent-hover: #7df4ff;
+  --accent-dim:   rgba(0, 219, 233, 0.12);
+  --accent-glow:  rgba(0, 219, 233, 0.28);
 
-  --green:      #10b981;
-  --green-dim:  rgba(16, 185, 129, 0.14);
-  --green-glow: rgba(16, 185, 129, 0.35);
+  --green:      #2ae500;
+  --green-dim:  rgba(42, 229, 0, 0.12);
+  --green-glow: rgba(42, 229, 0, 0.35);
 
   --amber:      #f59e0b;
-  --amber-dim:  rgba(245, 158, 11, 0.14);
+  --amber-dim:  rgba(245, 158, 11, 0.12);
   --amber-glow: rgba(245, 158, 11, 0.35);
 
-  --red:      #ef4444;
-  --red-dim:  rgba(239, 68, 68, 0.14);
-  --red-glow: rgba(239, 68, 68, 0.35);
+  --red:      #ffb4ab;
+  --red-dim:  rgba(255, 180, 171, 0.12);
+  --red-glow: rgba(255, 180, 171, 0.35);
 
-  --shadow-sm:    0 1px 4px rgba(0, 0, 0, 0.35);
-  --shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.55);
+  --card-glow-green: 0 0 56px -6px rgba(42, 229, 0, 0.3);
+  --card-glow-amber: 0 0 56px -6px rgba(245, 158, 11, 0.3);
+  --card-glow-red:   0 0 56px -6px rgba(255, 180, 171, 0.3);
+  --card-glow-cyan:  0 0 56px -6px rgba(0, 219, 233, 0.3);
+
+  --num-glow-green: 0 0 18px rgba(42, 229, 0, 0.7),   0 0 36px rgba(42, 229, 0, 0.3);
+  --num-glow-amber: 0 0 18px rgba(245, 158, 11, 0.7),  0 0 36px rgba(245, 158, 11, 0.3);
+  --num-glow-red:   0 0 18px rgba(255, 180, 171, 0.7), 0 0 36px rgba(255, 180, 171, 0.3);
+
+  --shadow-sm:    0 1px 4px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.65);
 }
 
 /* ══════════════════════════════════════════════════
-   Light mode overrides
-   ══════════════════════════════════════════════════ */
-[data-theme="light"] {
-  --bg-base:      #f0f2f8;
-  --bg-surface:   #ffffff;
-  --bg-elevated:  #f1f3f9;
-  --bg-overlay:   rgba(0, 0, 0, 0.025);
-
-  --border:        rgba(0, 0, 0, 0.07);
-  --border-strong: rgba(0, 0, 0, 0.15);
-
-  --text-primary:   #0f172a;
-  --text-secondary: #475569;
-  --text-muted:     #94a3b8;
-
-  --accent:       #0891b2;
-  --accent-hover: #0e7490;
-  --accent-dim:   rgba(8, 145, 178, 0.1);
-  --accent-glow:  rgba(8, 145, 178, 0.22);
-
-  --green:      #059669;
-  --green-dim:  rgba(5, 150, 105, 0.1);
-  --green-glow: rgba(5, 150, 105, 0.22);
-
-  --amber:      #d97706;
-  --amber-dim:  rgba(217, 119, 6, 0.1);
-  --amber-glow: rgba(217, 119, 6, 0.22);
-
-  --red:      #dc2626;
-  --red-dim:  rgba(220, 38, 38, 0.1);
-  --red-glow: rgba(220, 38, 38, 0.22);
-
-  --shadow-sm:    0 1px 4px rgba(0, 0, 0, 0.07);
-  --shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.12);
-}
-
-/* ══════════════════════════════════════════════════
-   Base
+   Base element styles
    ══════════════════════════════════════════════════ */
 html {
   transition: background-color 0.3s ease;
@@ -86,7 +58,7 @@ html {
 body {
   background-color: var(--bg-base);
   color: var(--text-primary);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  font-family: "Sora", var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -103,10 +75,47 @@ body {
   100% { background-position:  200% 0; }
 }
 
+@keyframes aurora {
+  0%   { transform: scale(1) translate(0%, 0%);      opacity: 0.5; }
+  33%  { transform: scale(1.08) translate(2%, -3%);  opacity: 0.65; }
+  66%  { transform: scale(0.96) translate(-2%, 2%);  opacity: 0.48; }
+  100% { transform: scale(1) translate(0%, 0%);      opacity: 0.5; }
+}
+
+@keyframes dot-pulse {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%       { transform: scale(1.6); opacity: 0.5; }
+}
+
+@keyframes live-ring {
+  0%   { transform: scale(1);   opacity: 0.7; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+@keyframes breathe-mint {
+  0%, 100% { box-shadow: 0 0 5px rgba(42, 229, 0, 0.2); }
+  50%       { box-shadow: 0 0 15px rgba(42, 229, 0, 0.5); }
+}
+
+@keyframes breathe-blue {
+  0%, 100% { box-shadow: 0 0 5px rgba(0, 219, 233, 0.2); }
+  50%       { box-shadow: 0 0 15px rgba(0, 219, 233, 0.5); }
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.95); box-shadow: 0 0 0 0    rgba(125, 244, 255, 0.7); }
+  70%  { transform: scale(1);    box-shadow: 0 0 0 10px rgba(125, 244, 255, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0    rgba(125, 244, 255, 0); }
+}
+
 /* ══════════════════════════════════════════════════
-   Component classes
+   All custom component classes — MUST be in
+   @layer components so Tailwind utilities can
+   override individual properties when needed.
    ══════════════════════════════════════════════════ */
 @layer components {
+
+  /* ── Legacy card base ─────────────────────────── */
   .card-base {
     background-color: var(--bg-surface);
     border: 1px solid var(--border);
@@ -120,51 +129,104 @@ body {
     transform: translateY(-2px);
   }
 
-  /* Glow progress track */
+  /* ── LUMEN HUB: full glass panel ─────────────── */
+  .glass-panel {
+    background: rgba(18, 20, 24, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0px 0px 20px rgba(0, 219, 233, 0.05);
+  }
+
+  /* ── LUMEN HUB: card-style glass (darker) ────── */
+  .glass-card {
+    background: rgba(30, 32, 36, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1.25rem;
+    position: relative;
+    transition: border-color 250ms ease, box-shadow 250ms ease;
+  }
+
+  /* ── LUMEN HUB: top/left highlight border ────── */
+  .glass-highlight {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  /* ── Stat chip ───────────────────────────────── */
+  .stat-chip {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    background: rgba(30, 32, 36, 0.7);
+    border: 1px solid rgba(59, 73, 75, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 0.875rem;
+    padding: 10px 16px;
+    transition: border-color 200ms ease;
+  }
+  .stat-chip:hover {
+    border-color: rgba(0, 219, 233, 0.3);
+  }
+
+  /* ── Glow progress bar track ─────────────────── */
   .bar-track {
-    height: 6px;
+    height: 8px;
     width: 100%;
     overflow: hidden;
     border-radius: 9999px;
-    background-color: var(--bg-elevated);
+    background: rgba(59, 73, 75, 0.4);
   }
 
   .bar-fill-green {
     height: 100%;
     border-radius: 9999px;
-    background: linear-gradient(90deg, #059669, #10b981);
-    box-shadow: 0 0 10px var(--green-glow);
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(90deg, #1eb300, #2ae500, #5ef23c);
+    box-shadow: 0 0 14px var(--green-glow), 0 0 4px var(--green-glow);
+    transition: width 0.65s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .bar-fill-amber {
     height: 100%;
     border-radius: 9999px;
-    background: linear-gradient(90deg, #d97706, #f59e0b);
-    box-shadow: 0 0 10px var(--amber-glow);
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(90deg, #d97706, #f59e0b, #fbbf24);
+    box-shadow: 0 0 14px var(--amber-glow), 0 0 4px var(--amber-glow);
+    transition: width 0.65s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .bar-fill-red {
     height: 100%;
     border-radius: 9999px;
-    background: linear-gradient(90deg, #dc2626, #ef4444);
-    box-shadow: 0 0 10px var(--red-glow);
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-}
-
-/* ══════════════════════════════════════════════════
-   Utilities
-   ══════════════════════════════════════════════════ */
-@layer utilities {
-  .text-balance { text-wrap: balance; }
-
-  .no-scrollbar::-webkit-scrollbar { display: none; }
-  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-  .animate-fade-up {
-    animation: fade-up 0.35s ease both;
+    background: linear-gradient(90deg, #e0847c, #ffb4ab, #ffc9c2);
+    box-shadow: 0 0 14px var(--red-glow), 0 0 4px var(--red-glow);
+    transition: width 0.65s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  /* ── SVG circular progress ring ──────────────── */
+  .progress-ring-circle {
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dashoffset 0.6s ease;
+  }
+
+  /* ── Status breathing indicators ─────────────── */
+  .breathing-mint {
+    animation: breathe-mint 3s ease-in-out infinite;
+  }
+  .breathing-blue {
+    animation: breathe-blue 3s ease-in-out infinite;
+  }
+
+  /* ── Live pulse dot ──────────────────────────── */
+  .pulse-dot {
+    animation: pulse-ring 2s infinite;
+  }
+
+  /* ── Shimmer skeleton ────────────────────────── */
   .animate-shimmer {
     background: linear-gradient(
       90deg,
@@ -175,4 +237,20 @@ body {
     background-size: 200% 100%;
     animation: shimmer 1.8s ease infinite;
   }
+
+  /* ── Other named animations ──────────────────── */
+  .animate-fade-up   { animation: fade-up 0.35s ease both; }
+  .animate-dot-pulse { animation: dot-pulse 2s ease-in-out infinite; }
+  .animate-aurora    { animation: aurora 18s ease-in-out infinite; }
+  .animate-live-ring { animation: live-ring 1.8s ease-out infinite; }
+}
+
+/* ══════════════════════════════════════════════════
+   Utilities — single-purpose helpers only
+   ══════════════════════════════════════════════════ */
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
