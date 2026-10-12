@@ -31,7 +31,7 @@ export const labs: Lab[] = [
     hours: "Mon–Fri 8am–10pm",
     access: "CS students (WatIAM login)",
     laptopFriendly: false,
-    notes: "Linux only. Reserved for scheduled CS courses — open outside class hours.",
+    notes: "Linux only. Reserved for scheduled CS courses, but open outside class hours.",
   },
   {
     room: "MC 3003",

@@ -101,7 +101,7 @@ export const buildings: Building[] = [
   },
   {
     id: "needles-hall",
-    name: "Needles Hall — The Centre",
+    name: "Needles Hall (The Centre)",
     shortName: "NH",
     coords: [43.4716, -80.5449],
     description: "Administrative and student services hub with first-come first-serve study rooms.",

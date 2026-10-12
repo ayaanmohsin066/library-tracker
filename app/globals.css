@@ -29,20 +29,6 @@
 
   --radius: 14px;
   color-scheme: dark;
-
-  /* Legacy aliases — older pages still reference these */
-  --bg-base:        var(--bg);
-  --bg-surface:     var(--surface);
-  --bg-elevated:    var(--surface-2);
-  --bg-overlay:     var(--line);
-  --border:         var(--line);
-  --border-strong:  var(--line-strong);
-  --text-primary:   var(--fg);
-  --text-secondary: var(--fg-2);
-  --text-muted:     var(--muted);
-  --green:          var(--ok);
-  --amber:          var(--warn);
-  --red:            var(--bad);
 }
 
 .light {
@@ -109,10 +95,6 @@ body {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: none; }
 }
-@keyframes fade-up {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: none; }
-}
 
 @layer components {
   .card {
@@ -121,16 +103,6 @@ body {
     border-radius: var(--radius);
   }
 
-  /* Kept so older pages render with the new look */
-  .glass-panel,
-  .glass-card,
-  .card-base {
-    background: var(--surface);
-    border: 1px solid var(--line);
-  }
-  .glass-card { border-radius: var(--radius); }
-  .glass-highlight { border-color: var(--line); }
-
   .animate-shimmer {
     background: linear-gradient(90deg, var(--surface-2) 25%, var(--line-strong) 50%, var(--surface-2) 75%);
     background-size: 200% 100%;
@@ -138,7 +110,6 @@ body {
   }
   .animate-live-ring { animation: live-ring 2s ease-out infinite; }
   .animate-rise      { animation: rise 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-  .animate-fade-up   { animation: fade-up 0.35s ease both; }
 
   .bar {
     height: 6px;
@@ -196,6 +167,3 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
-
-/* Older pages hard-code the Sora font inline; normalise to the system font */
-[style*="Sora"] { font-family: inherit !important; }
