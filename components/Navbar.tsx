@@ -30,7 +30,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 h-14 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--bg)_85%,transparent)] backdrop-blur-md">
+      <header className="fixed inset-x-0 top-0 z-50 h-14 border-b border-[var(--line)] bg-[var(--bg)]">
         <div className="mx-auto flex h-full max-w-5xl items-center gap-6 px-4 sm:px-6">
           <Logo />
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Map, { Marker } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { buildings, type Building, type StudySpace } from "@/lib/buildingData";
+import { FilterChips, Tag, ExternalIcon } from "@/components/ui";
 
 // ── Category system ───────────────────────────────────────────────────────────
 
@@ -34,21 +35,19 @@ const BUILDING_CATEGORY: Record<string, Category> = {
   "ev3":              "cafe",
 };
 
-const CATEGORY_META: Record<Category, {
-  color: string; glowRgb: string; filterKey: FilterKey; badge: string;
-}> = {
-  "library":         { color: "var(--accent)", glowRgb: "99,102,241",  filterKey: "libraries", badge: "Library"         },
-  "college-library": { color: "#A855F7", glowRgb: "168,85,247",  filterKey: "libraries", badge: "College Library" },
-  "lab":             { color: "var(--warn)", glowRgb: "245,158,11",  filterKey: "labs",      badge: "Lab"             },
-  "study":           { color: "var(--ok)", glowRgb: "52,211,153",  filterKey: "study",     badge: "Study Space"     },
-  "cafe":            { color: "var(--ok)", glowRgb: "52,211,153",  filterKey: "cafes",     badge: "Café"            },
+const CATEGORY_META: Record<Category, { filterKey: FilterKey; badge: string }> = {
+  "library":         { filterKey: "libraries", badge: "Library"         },
+  "college-library": { filterKey: "libraries", badge: "College library" },
+  "lab":             { filterKey: "labs",      badge: "Lab"             },
+  "study":           { filterKey: "study",     badge: "Study space"     },
+  "cafe":            { filterKey: "cafes",     badge: "Café"            },
 };
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "all",       label: "All"          },
   { key: "libraries", label: "Libraries"    },
   { key: "labs",      label: "Labs"         },
-  { key: "study",     label: "Study Spaces" },
+  { key: "study",     label: "Study spaces" },
   { key: "cafes",     label: "Cafés"        },
 ];
 
@@ -61,477 +60,143 @@ function matchesFilter(b: Building, f: FilterKey): boolean {
   return CATEGORY_META[getCategory(b)].filterKey === f;
 }
 
-// ── Noise / type meta ─────────────────────────────────────────────────────────
-
-const NOISE_META: Record<StudySpace["noiseLevel"], { icon: string; label: string; color: string; rgb: string }> = {
-  silent:        { icon: "🔇", label: "Silent",        color: "var(--accent)", rgb: "129,140,248" },
-  quiet:         { icon: "🤫", label: "Quiet",         color: "var(--ok)", rgb: "52,211,153"  },
-  collaborative: { icon: "💬", label: "Collaborative", color: "var(--warn)", rgb: "245,158,11"  },
+const NOISE_LABEL: Record<StudySpace["noiseLevel"], string> = {
+  silent: "Silent",
+  quiet: "Quiet",
+  collaborative: "Talking OK",
 };
 
-const TYPE_META: Record<StudySpace["type"], { icon: string; label: string }> = {
-  individual: { icon: "🪑", label: "Individual" },
-  group:      { icon: "👥", label: "Group"      },
-  lounge:     { icon: "☕", label: "Lounge"     },
-  classroom:  { icon: "🏫", label: "Classroom"  },
+const TYPE_LABEL: Record<StudySpace["type"], string> = {
+  individual: "Individual",
+  group: "Group",
+  lounge: "Lounge",
+  classroom: "Classroom",
 };
 
-function hasKeycard(b: Building) {
-  return b.studySpaces.some((s) => s.keycardRequired);
+// ── Theme ─────────────────────────────────────────────────────────────────────
+
+/** Follows the `light` class that ThemeToggle sets on <html>. */
+function useIsLight() {
+  const [isLight, setIsLight] = useState(false);
+  useEffect(() => {
+    const root = document.documentElement;
+    const read = () => setIsLight(root.classList.contains("light"));
+    read();
+    const obs = new MutationObserver(read);
+    obs.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
+  return isLight;
 }
 
-// ── Space Card ────────────────────────────────────────────────────────────────
+// ── Space row ─────────────────────────────────────────────────────────────────
 
-function SpaceCard({ space }: { space: StudySpace }) {
-  const noise = NOISE_META[space.noiseLevel];
-  const type  = TYPE_META[space.type];
+function SpaceRow({ space }: { space: StudySpace }) {
+  const notes = space.notes && space.notes !== "Bookable online" ? space.notes : null;
   return (
-    <div style={{
-      padding: "14px 16px", borderRadius: 14, marginBottom: 10,
-      background: "rgba(255,255,255,0.025)",
-      border: "1px solid var(--line)",
-    }}>
-      <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 700, color: "var(--fg)", lineHeight: 1.3 }}>
-        {space.name}
-      </p>
-      <p style={{ margin: "0 0 10px", fontSize: 11, color: "var(--muted)" }}>{space.floor}</p>
-
-      {/* Type + noise badges */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 8 }}>
-        <span style={{
-          display: "inline-flex", alignItems: "center", gap: 4,
-          fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 6,
-          backgroundColor: "color-mix(in srgb, var(--accent) 10%, transparent)", color: "var(--fg-2)",
-          border: "1px solid color-mix(in srgb, var(--accent) 20%, transparent)",
-        }}>
-          {type.icon} {type.label}
-        </span>
-        <span style={{
-          display: "inline-flex", alignItems: "center", gap: 4,
-          fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 6,
-          backgroundColor: `rgba(${noise.rgb},0.1)`,
-          color: noise.color, border: `1px solid color-mix(in srgb, ${noise.color} 27%, transparent)`,
-        }}>
-          {noise.icon} {noise.label}
-        </span>
+    <li className="border-t border-[var(--line)] py-4 first:border-t-0 first:pt-0">
+      <p className="text-[15px] font-medium">{space.name}</p>
+      <p className="mt-0.5 text-[13px] text-[var(--muted)]">{space.floor}</p>
+      <div className="mt-2.5 flex flex-wrap gap-1.5">
+        <Tag>{TYPE_LABEL[space.type]}</Tag>
+        <Tag>{NOISE_LABEL[space.noiseLevel]}</Tag>
+        {space.outlets && <Tag>Outlets</Tag>}
+        {space.printer && <Tag>Printer</Tag>}
+        {space.keycardRequired && <Tag>Keycard</Tag>}
       </div>
-
-      {/* Info chips */}
-      {(space.keycardRequired || space.outlets || space.printer) && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
-          {space.keycardRequired && (
-            <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 5, backgroundColor: "color-mix(in srgb, var(--bad) 10%, transparent)", color: "var(--bad)", border: "1px solid color-mix(in srgb, var(--bad) 30%, transparent)" }}>
-              🔒 Keycard
-            </span>
-          )}
-          {space.outlets && (
-            <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 5, backgroundColor: "color-mix(in srgb, var(--accent) 8%, transparent)", color: "var(--accent)", border: "1px solid color-mix(in srgb, var(--accent) 20%, transparent)" }}>
-              🔌 Outlets
-            </span>
-          )}
-          {space.printer && (
-            <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 5, backgroundColor: "color-mix(in srgb, var(--accent) 8%, transparent)", color: "var(--accent)", border: "1px solid color-mix(in srgb, var(--accent) 20%, transparent)" }}>
-              🖨️ Printer
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Notes */}
-      {space.notes && (
-        <p style={{ margin: "0 0 10px", fontSize: 11, color: "var(--muted)", lineHeight: 1.55, fontStyle: "italic" }}>
-          {space.notes}
-        </p>
-      )}
-
-      {/* Book now */}
+      {notes && <p className="mt-2 text-[13px] text-[var(--muted)]">{notes}</p>}
       {space.bookingUrl && (
-        <a
-          href={space.bookingUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 4,
-            fontSize: 12, fontWeight: 700, color: "var(--accent)",
-            textDecoration: "none", padding: "5px 12px", borderRadius: 8,
-            backgroundColor: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 30%, transparent)",
-          }}
-        >
-          Book now →
+        <a href={space.bookingUrl} target="_blank" rel="noopener noreferrer" className="btn btn-ghost mt-3 !h-9 !px-3 !text-[13px]">
+          Book <ExternalIcon />
         </a>
       )}
-    </div>
+    </li>
   );
 }
 
-// ── Side Panel ────────────────────────────────────────────────────────────────
+// ── Side panel (desktop) / bottom sheet (mobile) ──────────────────────────────
 
-function Panel({ building, onClose, isMobile }: {
-  building: Building; onClose: () => void; isMobile: boolean;
-}) {
-  const cat     = getCategory(building);
-  const meta    = CATEGORY_META[cat];
-  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${building.coords[0]},${building.coords[1]}`;
-
-  const base: React.CSSProperties = {
-    background: "var(--surface)",
-    backdropFilter: "blur(24px)",
-    WebkitBackdropFilter: "blur(24px)",
-    overflowY: "auto",
-  };
-
-  const panelStyle: React.CSSProperties = isMobile
-    ? {
-        ...base,
-        position: "fixed", left: 0, right: 0, bottom: 0,
-        height: "60vh", zIndex: 1000,
-        borderTop: `1px solid color-mix(in srgb, ${meta.color} 27%, transparent)`,
-        borderRadius: "20px 20px 0 0",
-        boxShadow: `0 -8px 48px rgba(0,0,0,0.7), inset 0 0 32px color-mix(in srgb, ${meta.color} 2%, transparent)`,
-        animation: "lc-slideUp 240ms cubic-bezier(0.4,0,0.2,1) forwards",
-      }
-    : {
-        ...base,
-        position: "fixed", top: 64, right: 0, bottom: 0,
-        width: 380, zIndex: 1000,
-        borderLeft: `1px solid color-mix(in srgb, ${meta.color} 27%, transparent)`,
-        boxShadow: `-8px 0 48px rgba(0,0,0,0.6), inset 0 0 32px color-mix(in srgb, ${meta.color} 2%, transparent)`,
-        animation: "lc-slideRight 240ms cubic-bezier(0.4,0,0.2,1) forwards",
-      };
+function Panel({ building, onClose }: { building: Building; onClose: () => void }) {
+  const directions = `https://www.google.com/maps/dir/?api=1&destination=${building.coords[0]},${building.coords[1]}`;
 
   return (
     <>
-      <style>{`
-        @keyframes lc-slideRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
-        @keyframes lc-slideUp    { from { transform: translateY(100%); } to { transform: translateY(0); } }
-      `}</style>
-
-      {isMobile && (
-        <div
-          onClick={onClose}
-          aria-hidden="true"
-          style={{
-            position: "fixed", inset: 0, zIndex: 999,
-            backgroundColor: "rgba(0,0,0,0.55)",
-            backdropFilter: "blur(2px)", WebkitBackdropFilter: "blur(2px)",
-          }}
-        />
-      )}
-
-      <div style={panelStyle}>
-        {/* Drag handle (mobile) */}
-        {isMobile && (
-          <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 6px" }}>
-            <div style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: "var(--line-strong)" }} />
-          </div>
-        )}
-
-        {/* ── Header ── */}
-        <div style={{ padding: isMobile ? "10px 20px 0" : "24px 20px 0" }}>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
-            <div style={{ flex: 1 }}>
-              {/* Category badge */}
-              <span style={{
-                display: "inline-block", marginBottom: 8,
-                fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.14em",
-                color: meta.color, backgroundColor: `color-mix(in srgb, ${meta.color} 9%, transparent)`,
-                border: `1px solid color-mix(in srgb, ${meta.color} 27%, transparent)`,
-                padding: "2px 9px", borderRadius: 5,
-              }}>
-                {meta.badge}
-              </span>
-              <h2 style={{
-                margin: 0, fontSize: 17, fontWeight: 800, lineHeight: 1.2,
-                color: "var(--fg)", letterSpacing: "-0.02em", fontFamily: "Sora, sans-serif",
-              }}>
-                {building.name}
-              </h2>
+      <div onClick={onClose} aria-hidden="true" className="fixed inset-0 top-14 z-30 bg-black/40 md:hidden" />
+      <aside
+        aria-label={building.name}
+        className="animate-rise fixed inset-x-0 bottom-0 z-40 max-h-[65dvh] overflow-y-auto rounded-t-[var(--radius)] border-t border-[var(--line-strong)] bg-[var(--surface)] md:inset-x-auto md:bottom-0 md:right-0 md:top-14 md:max-h-none md:w-[380px] md:rounded-none md:border-l md:border-t-0"
+      >
+        <div className="p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[13px] text-[var(--muted)]">{CATEGORY_META[getCategory(building)].badge}</p>
+              <h2 className="mt-1 text-xl font-semibold leading-tight tracking-[-0.02em]">{building.name}</h2>
             </div>
             <button
               onClick={onClose}
               aria-label="Close panel"
-              style={{
-                flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                width: 32, height: 32, borderRadius: 9,
-                backgroundColor: "var(--line)", border: "1px solid var(--line-strong)",
-                color: "var(--muted)", cursor: "pointer",
-              }}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--muted)] hover:bg-[var(--surface-2)] hover:text-[var(--fg)]"
             >
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" aria-hidden="true">
-                <line x1="3" y1="3" x2="13" y2="13" /><line x1="13" y1="3" x2="3" y2="13" />
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" aria-hidden="true">
+                <path d="M3 3l10 10M13 3L3 13" />
               </svg>
             </button>
           </div>
 
-          {/* Description */}
-          <p style={{ margin: "0 0 14px", fontSize: 13, color: "var(--muted)", lineHeight: 1.55 }}>
-            {building.description}
-          </p>
+          <p className="mt-3 text-[14px] leading-relaxed text-[var(--fg-2)]">{building.description}</p>
 
-          {/* Action chips */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 20 }}>
-            <a
-              href={mapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 5,
-                fontSize: 12, fontWeight: 700, color: "var(--fg)",
-                textDecoration: "none", padding: "7px 14px", borderRadius: 9,
-                backgroundColor: "color-mix(in srgb, var(--accent) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 30%, transparent)",
-              }}
-            >
-              📍 Get directions
-            </a>
-            <span style={{
-              display: "inline-flex", alignItems: "center",
-              fontSize: 12, fontWeight: 600, color: "var(--muted)",
-              padding: "7px 14px", borderRadius: 9,
-              backgroundColor: "var(--line)", border: "1px solid var(--line)",
-            }}>
-              🎓 On campus
-            </span>
-            {hasKeycard(building) && (
-              <span style={{
-                display: "inline-flex", alignItems: "center", gap: 4,
-                fontSize: 12, fontWeight: 600, color: "var(--bad)",
-                padding: "7px 14px", borderRadius: 9,
-                backgroundColor: "color-mix(in srgb, var(--bad) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--bad) 22%, transparent)",
-              }}>
-                🔒 Keycard areas
-              </span>
-            )}
-          </div>
+          <a href={directions} target="_blank" rel="noopener noreferrer" className="btn btn-primary mt-4">
+            Directions <ExternalIcon />
+          </a>
 
-          <p style={{
-            margin: "0 0 12px", fontSize: 10, fontWeight: 700,
-            textTransform: "uppercase", letterSpacing: "0.16em", color: "var(--muted)",
-          }}>
-            Study Spaces · {building.studySpaces.length}
-          </p>
-        </div>
+          <h3 className="eyebrow mb-4 mt-7">
+            {building.studySpaces.length} study {building.studySpaces.length === 1 ? "space" : "spaces"}
+          </h3>
+          <ul>
+            {building.studySpaces.map((space, i) => (
+              <SpaceRow key={i} space={space} />
+            ))}
+          </ul>
 
-        {/* ── Space cards ── */}
-        <div style={{ padding: "0 20px 16px" }}>
-          {building.studySpaces.map((space, i) => (
-            <SpaceCard key={i} space={space} />
-          ))}
-        </div>
-
-        {/* ── Footer ── */}
-        <div style={{ padding: "14px 20px 28px", borderTop: "1px solid var(--line)" }}>
           <a
             href="https://uwaterloo.ca/map/"
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 5,
-              fontSize: 12, fontWeight: 600, color: "var(--muted)", textDecoration: "none",
-              transition: "color 150ms ease",
-            }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = "var(--accent)")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = "var(--muted)")}
+            className="mt-5 inline-flex items-center gap-1.5 text-[13px] text-[var(--muted)] underline underline-offset-4 hover:text-[var(--fg)]"
           >
-            View on Campus Map ↗
+            Official campus map
           </a>
         </div>
-      </div>
+      </aside>
     </>
   );
 }
 
-// ── Building Marker ───────────────────────────────────────────────────────────
+// ── Building marker ───────────────────────────────────────────────────────────
 
 function BuildingMarker({
-  building, isSelected, isDimmed, visible, onSelect,
+  building, isSelected, isDimmed, onSelect,
 }: {
   building: Building;
   isSelected: boolean;
   isDimmed: boolean;
-  visible: boolean;
   onSelect: () => void;
 }) {
-  const [hov, setHov] = useState(false);
-  const cat  = getCategory(building);
-  const { color, glowRgb } = CATEGORY_META[cat];
-  const dotSize = isSelected ? 16 : hov ? 14 : 12;
-
   return (
-    <div
-      style={{
-        display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
-        cursor: "pointer",
-        opacity: !visible ? 0 : isDimmed ? 0.18 : 1,
-        transform: visible ? "scale(1)" : "scale(0.4)",
-        transition: "opacity 350ms ease, transform 350ms ease",
-      }}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
+    <button
+      type="button"
       onClick={(e) => { e.stopPropagation(); onSelect(); }}
+      aria-label={`${building.name}, ${building.studySpaces.length} study spaces`}
+      aria-pressed={isSelected}
+      title={building.name}
+      className={`num flex h-7 min-w-9 items-center justify-center rounded-md border px-1.5 text-[11px] font-medium shadow-sm transition-opacity ${
+        isSelected
+          ? "border-[var(--fg)] bg-[var(--fg)] text-[var(--bg)]"
+          : "border-[var(--line-strong)] bg-[var(--surface)] text-[var(--fg)] hover:border-[var(--fg)]"
+      } ${isDimmed ? "opacity-25" : ""}`}
     >
-      {/* Dot + ring + tooltip */}
-      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {/* Tooltip */}
-        {(hov || isSelected) && (
-          <div style={{
-            position: "absolute",
-            bottom: `calc(100% + ${dotSize / 2 + 8}px)`,
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "var(--surface)",
-            border: `1px solid color-mix(in srgb, ${color} 33%, transparent)`,
-            borderRadius: 9, padding: "5px 11px",
-            fontSize: 11, fontWeight: 600, color: "var(--fg)",
-            whiteSpace: "nowrap", pointerEvents: "none",
-            boxShadow: `0 4px 20px rgba(0,0,0,0.7), 0 0 12px color-mix(in srgb, ${color} 13%, transparent)`,
-            zIndex: 20, fontFamily: "Sora, sans-serif",
-          }}>
-            <span style={{ color, marginRight: 5, fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-              {building.shortName}
-            </span>
-            {building.name}
-            <div style={{
-              position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)",
-              width: 0, height: 0,
-              borderLeft: "5px solid transparent",
-              borderRight: "5px solid transparent",
-              borderTop: `5px solid color-mix(in srgb, ${color} 33%, transparent)`,
-            }} />
-          </div>
-        )}
-
-        {/* Pulse ring when selected */}
-        {isSelected && (
-          <div style={{
-            position: "absolute",
-            width: dotSize + 12, height: dotSize + 12,
-            borderRadius: "50%",
-            border: `1.5px solid ${color}`,
-            animation: "lc-sel-ring 1.8s ease-out infinite",
-            pointerEvents: "none",
-          }} />
-        )}
-
-        {/* Dot */}
-        <div style={{
-          width: dotSize, height: dotSize,
-          borderRadius: "50%",
-          background: color,
-          border: `2px solid rgba(255,255,255,${isSelected ? 0.55 : 0.22})`,
-          boxShadow: isSelected
-            ? `0 0 0 4px color-mix(in srgb, ${color} 19%, transparent), 0 0 28px rgba(${glowRgb},0.9)`
-            : `0 0 14px rgba(${glowRgb},0.8)`,
-          transition: "width 150ms ease, height 150ms ease, box-shadow 150ms ease",
-          animation: `lc-glow-${cat} 3s ease-in-out infinite`,
-        }} />
-      </div>
-
-      {/* Short name label */}
-      <span style={{
-        fontSize: 8, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase",
-        color: hov || isSelected ? color : "rgba(225,225,232,0.65)",
-        fontFamily: "Sora, sans-serif",
-        transition: "color 150ms ease",
-        userSelect: "none",
-        textShadow: "0 1px 6px rgba(0,0,0,1), 0 1px 12px rgba(0,0,0,0.8)",
-      }}>
-        {building.shortName}
-      </span>
-    </div>
-  );
-}
-
-// ── Category Filter Pill ──────────────────────────────────────────────────────
-
-function CategoryFilter({ active, onChange }: { active: FilterKey; onChange: (k: FilterKey) => void }) {
-  return (
-    <div style={{
-      position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)",
-      zIndex: 500,
-      display: "inline-flex", alignItems: "center",
-      background: "var(--surface)",
-      backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-      border: "1px solid var(--line-strong)",
-      borderRadius: 9999, padding: "4px 5px", gap: 2,
-      boxShadow: "0 4px 28px rgba(0,0,0,0.6)",
-    }}>
-      {FILTERS.map(({ key, label }) => {
-        const isActive = active === key;
-        return (
-          <button
-            key={key}
-            onClick={() => onChange(key)}
-            style={{
-              padding: "6px 14px", borderRadius: 9999,
-              fontSize: 12, fontWeight: 600,
-              border: "none",
-              background: isActive ? "color-mix(in srgb, var(--accent) 22%, transparent)" : "transparent",
-              color: isActive ? "var(--accent)" : "var(--muted)",
-              cursor: "pointer",
-              transition: "background 150ms ease, color 150ms ease",
-              fontFamily: "Sora, sans-serif",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-// ── Map Legend ────────────────────────────────────────────────────────────────
-
-function MapLegend() {
-  return (
-    <div style={{
-      position: "absolute", bottom: 28, left: 16, zIndex: 500,
-      background: "var(--surface)",
-      backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-      border: "1px solid var(--line)",
-      borderRadius: 12, padding: "12px 16px",
-      boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
-      fontFamily: "Sora, sans-serif",
-    }}>
-      <p style={{ margin: "0 0 9px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--muted)" }}>
-        Building Types
-      </p>
-      {[
-        { color: "var(--accent)", glow: "color-mix(in srgb, var(--accent) 65%, transparent)",  label: "Libraries"         },
-        { color: "#A855F7", glow: "rgba(168,85,247,0.65)",  label: "College libraries"  },
-        { color: "var(--ok)", glow: "color-mix(in srgb, var(--ok) 65%, transparent)",  label: "Study spaces"       },
-        { color: "var(--warn)", glow: "color-mix(in srgb, var(--warn) 65%, transparent)",  label: "Labs"              },
-      ].map(({ color, glow, label }) => (
-        <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-          <span style={{
-            width: 8, height: 8, borderRadius: "50%", flexShrink: 0, display: "inline-block",
-            background: color, boxShadow: `0 0 6px ${glow}`,
-          }} />
-          <span style={{ fontSize: 12, color: "var(--fg-2)" }}>{label}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Space Counter ─────────────────────────────────────────────────────────────
-
-function SpaceCounter({ count }: { count: number }) {
-  return (
-    <div style={{
-      position: "absolute", top: 16, right: 16, zIndex: 500,
-      background: "var(--surface)",
-      backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-      border: "1px solid var(--line)",
-      borderRadius: 10, padding: "7px 14px",
-      fontSize: 12, fontWeight: 600, color: "var(--fg-2)",
-      fontFamily: "Sora, sans-serif",
-      boxShadow: "0 4px 16px rgba(0,0,0,0.45)",
-      whiteSpace: "nowrap",
-    }}>
-      📍 <span style={{ color: "var(--accent)", fontWeight: 700 }}>{count}</span> study spaces on campus
-    </div>
+      {building.shortName}
+    </button>
   );
 }
 
@@ -540,16 +205,16 @@ function SpaceCounter({ count }: { count: number }) {
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const TOKEN_MISSING = !TOKEN || TOKEN === "pk.eyJ1IjoiZXhhbXBsZSJ9.example";
 if (TOKEN_MISSING) {
-  console.warn("Add NEXT_PUBLIC_MAPBOX_TOKEN to .env.local — get a free token at mapbox.com");
+  console.warn("Add NEXT_PUBLIC_MAPBOX_TOKEN to .env.local (free token at mapbox.com)");
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function CampusMap() {
-  const [selected,       setSelected]       = useState<Building | null>(null);
-  const [isMobile,       setIsMobile]       = useState(false);
-  const [activeFilter,   setActiveFilter]   = useState<FilterKey>("all");
-  const [visibleMarkers, setVisibleMarkers] = useState<Set<string>>(new Set());
+  const [selected,     setSelected]     = useState<Building | null>(null);
+  const [isMobile,     setIsMobile]     = useState(false);
+  const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
+  const isLight = useIsLight();
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -558,67 +223,44 @@ export default function CampusMap() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Staggered marker fade-in on mount
-  useEffect(() => {
-    const timers = buildings.map((b, i) =>
-      window.setTimeout(() => {
-        setVisibleMarkers((prev) => { const next = new Set(prev); next.add(b.id); return next; });
-      }, i * 50)
-    );
-    return () => timers.forEach(window.clearTimeout);
-  }, []);
-
-  const filteredSpaceCount = buildings
-    .filter((b) => matchesFilter(b, activeFilter))
-    .reduce((sum, b) => sum + b.studySpaces.length, 0);
+  const shown = buildings.filter((b) => matchesFilter(b, activeFilter));
+  const spaceCount = shown.reduce((sum, b) => sum + b.studySpaces.length, 0);
+  const counts = Object.fromEntries(
+    FILTERS.map((f) => [f.key, buildings.filter((b) => matchesFilter(b, f.key)).length]),
+  ) as Record<FilterKey, number>;
 
   if (TOKEN_MISSING) {
     return (
-      <div style={{
-        width: "100%", height: "100%", background: "var(--bg)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        flexDirection: "column", gap: 12, textAlign: "center", padding: 32,
-      }}>
-        <span className="material-symbols-outlined" style={{ fontSize: 48, color: "var(--accent)" }}>map</span>
-        <h2 style={{ margin: 0, color: "var(--fg)", fontFamily: "Sora, sans-serif", fontSize: "1.1rem", fontWeight: 700 }}>
-          Interactive map unavailable
-        </h2>
-        <p style={{ margin: 0, color: "var(--muted)", fontSize: 14, maxWidth: 360, lineHeight: 1.6 }}>
-          Add your Mapbox token in <code style={{ color: "var(--accent)" }}>.env.local</code> to enable the interactive map.
+      <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-8 text-center">
+        <h2 className="text-lg font-semibold">Map unavailable</h2>
+        <p className="max-w-sm text-sm text-[var(--muted)]">
+          Add a Mapbox token as <code className="num text-[var(--fg-2)]">NEXT_PUBLIC_MAPBOX_TOKEN</code> in{" "}
+          <code className="num text-[var(--fg-2)]">.env.local</code> to turn the map on.
         </p>
       </div>
     );
   }
 
   return (
-    <div style={{ width: "100%", height: "100%", position: "relative" }}>
-      <style>{`
-        @keyframes lc-sel-ring {
-          0%   { transform: scale(1);   opacity: 0.85; }
-          100% { transform: scale(2.6); opacity: 0;    }
-        }
-        @keyframes lc-glow-library {
-          0%, 100% { box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 70%, transparent);  }
-          50%       { box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 100%, transparent);   }
-        }
-        @keyframes lc-glow-college-library {
-          0%, 100% { box-shadow: 0 0 8px rgba(168,85,247,0.7);  }
-          50%       { box-shadow: 0 0 20px rgba(168,85,247,1);   }
-        }
-        @keyframes lc-glow-lab {
-          0%, 100% { box-shadow: 0 0 8px color-mix(in srgb, var(--warn) 70%, transparent);  }
-          50%       { box-shadow: 0 0 20px color-mix(in srgb, var(--warn) 100%, transparent);   }
-        }
-        @keyframes lc-glow-study {
-          0%, 100% { box-shadow: 0 0 8px color-mix(in srgb, var(--ok) 70%, transparent);  }
-          50%       { box-shadow: 0 0 20px color-mix(in srgb, var(--ok) 100%, transparent);   }
-        }
-        @keyframes lc-glow-cafe {
-          0%, 100% { box-shadow: 0 0 8px color-mix(in srgb, var(--ok) 70%, transparent);  }
-          50%       { box-shadow: 0 0 20px color-mix(in srgb, var(--ok) 100%, transparent);   }
-        }
-      `}</style>
+    <div className="flex h-full w-full flex-col">
+      <div className="shrink-0 border-b border-[var(--line)] bg-[var(--bg)] py-2.5">
+        <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 sm:px-6">
+          <div className="min-w-0 flex-1">
+            <FilterChips
+              options={FILTERS}
+              value={activeFilter}
+              onChange={(k) => { setActiveFilter(k); setSelected(null); }}
+              counts={counts}
+            />
+          </div>
+          <p className="hidden shrink-0 text-[13px] text-[var(--muted)] lg:block">
+            <span className="num text-[var(--fg-2)]">{spaceCount}</span> study spaces in{" "}
+            <span className="num text-[var(--fg-2)]">{shown.length}</span> buildings
+          </p>
+        </div>
+      </div>
 
+      <div className="relative min-h-0 flex-1">
       <Map
         mapboxAccessToken={TOKEN}
         initialViewState={{ longitude: -80.5435, latitude: 43.4710, zoom: 15.8 }}
@@ -626,64 +268,24 @@ export default function CampusMap() {
         maxZoom={19}
         scrollZoom={!isMobile}
         style={{ width: "100%", height: "100%" }}
-        mapStyle="mapbox://styles/mapbox/dark-v11"
+        mapStyle={isLight ? "mapbox://styles/mapbox/light-v11" : "mapbox://styles/mapbox/dark-v11"}
         onClick={() => setSelected(null)}
       >
         {buildings.map((b) => (
-          <Marker
-            key={b.id}
-            longitude={b.coords[1]}
-            latitude={b.coords[0]}
-            anchor="center"
-          >
+          <Marker key={b.id} longitude={b.coords[1]} latitude={b.coords[0]} anchor="center">
             <BuildingMarker
               building={b}
               isSelected={selected?.id === b.id}
-              isDimmed={activeFilter !== "all" && !matchesFilter(b, activeFilter)}
-              visible={visibleMarkers.has(b.id)}
+              isDimmed={!matchesFilter(b, activeFilter)}
               onSelect={() => setSelected((prev) => (prev?.id === b.id ? null : b))}
             />
           </Marker>
         ))}
       </Map>
 
-      {/* Category filter — top center */}
-      <CategoryFilter
-        active={activeFilter}
-        onChange={(k) => { setActiveFilter(k); setSelected(null); }}
-      />
+      </div>
 
-      {/* Space counter — top right */}
-      <SpaceCounter count={filteredSpaceCount} />
-
-      {/* Legend — bottom left */}
-      <MapLegend />
-
-      {/* Hint — bottom center when nothing selected */}
-      {!selected && (
-        <div style={{
-          position: "absolute", bottom: 28, left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 500, pointerEvents: "none",
-          background: "var(--surface)",
-          backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-          border: "1px solid var(--line)",
-          borderRadius: 12, padding: "8px 18px",
-          fontSize: 13, fontWeight: 500, color: "var(--fg-2)",
-          whiteSpace: "nowrap", fontFamily: "Sora, sans-serif",
-        }}>
-          Click a marker to explore study spaces
-        </div>
-      )}
-
-      {/* Side panel / bottom sheet */}
-      {selected && (
-        <Panel
-          building={selected}
-          onClose={() => setSelected(null)}
-          isMobile={isMobile}
-        />
-      )}
+      {selected && <Panel building={selected} onClose={() => setSelected(null)} />}
     </div>
   );
 }

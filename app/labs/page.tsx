@@ -57,9 +57,9 @@ export default function LabsPage() {
               <p className="text-[15px]">{l.name}</p>
               <p className="mt-0.5 text-[13px] text-[var(--muted)]">{l.hours} · {l.access}</p>
               <div className="mt-2.5 flex flex-wrap gap-1.5">
-                {is247(l) && <Tag tone="ok">24/7</Tag>}
-                {l.laptopFriendly && <Tag tone="ok">Laptop-friendly</Tag>}
-                {l.type.toLowerCase().includes("instructional") && <Tag tone="warn">Closed during classes</Tag>}
+                {is247(l) && <Tag>24/7</Tag>}
+                {l.laptopFriendly && <Tag>Laptop-friendly</Tag>}
+                {l.type.toLowerCase().includes("instructional") && <Tag>Closed during classes</Tag>}
                 {os(l).map((o) => <Tag key={o}>{o}</Tag>)}
                 {(l.notes ?? "").toLowerCase().includes("print") && <Tag>Printing</Tag>}
               </div>

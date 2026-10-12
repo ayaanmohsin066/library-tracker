@@ -4,7 +4,7 @@ const CampusMap = dynamic(() => import("@/components/CampusMap"), { ssr: false }
 
 export default function MapPage() {
   return (
-    <div style={{ height: "calc(100vh - 64px)", overflow: "hidden", background: "var(--bg)" }}>
+    <div style={{ height: "calc(100dvh - 56px)", overflow: "hidden", background: "var(--bg)" }}>
       <CampusMap />
     </div>
   );

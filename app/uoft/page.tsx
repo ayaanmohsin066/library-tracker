@@ -2,54 +2,42 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BarChart, Bar, XAxis, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useFavorites } from "@/hooks/useFavorites";
 import { CampusSwitcher } from "@/components/CampusBoard";
 import { LEVEL_COLOR, level } from "@/lib/occupancy";
+import { Tag } from "@/components/ui";
 import {
   DAYS, POPULAR_TIMES, UOFT_LIBRARIES, todayKey, currentHourIndex, hourLabel, type DayKey,
 } from "@/lib/uoftData";
 
-interface ChartEntry { hour: string; value: number; index: number }
-
 function BusynessChart({ dayKey, isToday }: { dayKey: DayKey; isToday: boolean }) {
   const curIdx = isToday ? currentHourIndex() : null;
-  const data: ChartEntry[] = POPULAR_TIMES[dayKey].map((value, index) => ({ hour: hourLabel(index), value, index }));
+  const values = POPULAR_TIMES[dayKey];
 
   return (
-    <ResponsiveContainer width="100%" height={180}>
-      <BarChart data={data} barCategoryGap="18%" margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
-        <XAxis
-          dataKey="hour"
-          tick={{ fontSize: 11, fill: "var(--muted)", fontFamily: "var(--font-geist-mono)" }}
-          tickLine={false}
-          axisLine={false}
-          interval={1}
-        />
-        <Tooltip
-          cursor={{ fill: "var(--surface-2)" }}
-          content={({ active, payload }) => {
-            if (!active || !payload?.length) return null;
-            const { hour, value } = payload[0].payload as ChartEntry;
-            return (
-              <div className="rounded-lg border border-[var(--line-strong)] bg-[var(--surface)] px-3 py-1.5 text-xs shadow-lg">
-                <span className="font-medium">{hour}</span>
-                <span className="num ml-2 text-[var(--muted)]">{value}/10 busy</span>
-              </div>
-            );
-          }}
-        />
-        <Bar dataKey="value" radius={[4, 4, 4, 4]}>
-          {data.map((e) => (
-            <Cell
-              key={e.index}
-              fill={LEVEL_COLOR[level(e.value * 10)]}
-              fillOpacity={curIdx === null || e.index === curIdx ? 1 : 0.35}
-            />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+    <ol className="flex h-44 items-stretch gap-1 sm:gap-2" aria-label="Typical busyness by hour, out of 10 (estimate)">
+      {values.map((value, i) => {
+        const dim = curIdx !== null && i !== curIdx;
+        return (
+          <li key={i} className="flex min-w-0 flex-1 flex-col items-center" aria-label={`${hourLabel(i)}: ${value} out of 10`}>
+            <div className="flex w-full flex-1 flex-col items-center justify-end gap-1" aria-hidden="true">
+              <span className={`num text-[11px] ${dim ? "text-[var(--muted)]" : "text-[var(--fg)]"}`}>{value}</span>
+              <span
+                className="w-full rounded-[4px]"
+                style={{
+                  height: `${Math.max(value * 8.5, 2)}%`,
+                  background: LEVEL_COLOR[level(value * 10)],
+                  opacity: dim ? 0.35 : 1,
+                }}
+              />
+            </div>
+            <span className={`num mt-2 h-4 text-[11px] text-[var(--muted)] ${i % 2 ? "invisible sm:visible" : ""}`} aria-hidden="true">
+              {hourLabel(i)}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -68,15 +56,18 @@ export default function UoftPage() {
       <header className="flex flex-col gap-6 pb-8 pt-10 sm:pt-16 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-[34px] font-semibold leading-[1.05] tracking-[-0.035em] sm:text-5xl">UofT libraries</h1>
-          <p className="mt-3 text-[15px] text-[var(--fg-2)]">No live sensors here, so these are typical patterns. Book ahead when it&apos;s busy.</p>
+          <p className="mt-3 text-[15px] text-[var(--fg-2)]">No live sensors here. Everything on this page is a typical pattern, not a live count.</p>
         </div>
         <CampusSwitcher value="uoft" onChange={(c) => router.push(c === "uoft" ? "/uoft" : `/${c}`)} />
       </header>
 
       <section className="card p-5 sm:p-7" aria-labelledby="pt-h">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <h2 id="pt-h" className="eyebrow">Typical busyness</h2>
-          <div className="flex gap-1 overflow-x-auto no-scrollbar" role="tablist" aria-label="Day">
+          <div className="flex items-center gap-2">
+            <h2 id="pt-h" className="eyebrow">Typical busyness</h2>
+            <Tag>Estimate</Tag>
+          </div>
+          <div className="grid w-full grid-cols-7 gap-1 sm:flex sm:w-auto" role="tablist" aria-label="Day">
             {DAYS.map(({ key, label }) => {
               const sel = day === key;
               return (
@@ -85,7 +76,7 @@ export default function UoftPage() {
                   role="tab"
                   aria-selected={sel}
                   onClick={() => setDay(key)}
-                  className={`h-8 shrink-0 rounded-lg px-3 text-[13px] transition-colors ${
+                  className={`h-8 rounded-lg text-[13px] transition-colors sm:px-3 ${
                     sel ? "bg-[var(--fg)] font-medium text-[var(--bg)]" : "text-[var(--fg-2)] hover:bg-[var(--surface-2)]"
                   }`}
                 >
@@ -96,13 +87,9 @@ export default function UoftPage() {
             })}
           </div>
         </div>
-        <div className="-mx-1 overflow-x-auto">
-          <div className="min-w-[480px]">
-            <BusynessChart dayKey={day} isToday={day === today} />
-          </div>
-        </div>
+        <BusynessChart dayKey={day} isToday={day === today} />
         {day === today && currentHourIndex() !== null && (
-          <p className="mt-3 text-[13px] text-[var(--muted)]">Highlighted bar is the current hour.</p>
+          <p className="mt-3 text-[13px] text-[var(--muted)]">The full-strength bar is the current hour. Scale is 0 to 10.</p>
         )}
       </section>
 

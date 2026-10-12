@@ -18,7 +18,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "LibraryCheck — Find a study spot before you walk over",
+  title: "LibraryCheck: find a seat before you walk over",
   description:
     "Real-time library occupancy for University of Waterloo, University of Regina, and University of Toronto.",
 };
@@ -32,12 +32,6 @@ export default function RootLayout({
         <link
           rel="icon"
           href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23111113'/><circle cx='16' cy='16' r='6' fill='%233DD68C'/></svg>"
-        />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-          rel="stylesheet"
         />
         {/* PWA */}
         <link rel="manifest" href="/manifest.json" />
@@ -56,7 +50,7 @@ export default function RootLayout({
       >
         <Providers>
           <Navbar />
-          <main className="pt-14 min-h-screen">
+          <main className="min-h-[100dvh] pt-14">
             {children}
           </main>
         </Providers>

@@ -63,10 +63,10 @@ export default function StudyRoomsPage() {
                   {r.floor ? ` · ${r.floor}` : ""}
                 </p>
                 <div className="mt-2.5 flex flex-wrap gap-1.5">
-                  {isBookable(r) ? <Tag tone="ok">Bookable</Tag> : is247(r) ? <Tag tone="ok">24/7</Tag> : <Tag>Walk in</Tag>}
+                  {isBookable(r) ? <Tag>Bookable</Tag> : is247(r) ? <Tag>24/7</Tag> : <Tag>Walk in</Tag>}
                   <Tag>{NOISE[r.noiseLevel]}</Tag>
                   {r.outlets && <Tag>Outlets</Tag>}
-                  {r.keycardRequired && <Tag tone="warn">Keycard</Tag>}
+                  {r.keycardRequired && <Tag>Keycard</Tag>}
                 </div>
                 {notes && <p className="mt-2 text-[13px] text-[var(--muted)]">{notes}</p>}
               </div>

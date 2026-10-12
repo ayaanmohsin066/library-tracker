@@ -8,6 +8,7 @@ import {
   CAMPUSES, LEVEL_COLOR, level, levelLabel, mapsUrl, usefulHours, type Campus,
 } from "@/lib/occupancy";
 import { POPULAR_TIMES, todayKey, currentHourIndex } from "@/lib/uoftData";
+import { Tag } from "@/components/ui";
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -147,14 +148,16 @@ function LibraryRow({
           <span className="min-w-0">
             <span className={`block truncate text-[15px] font-medium ${lib.isOpen ? "" : "text-[var(--muted)]"}`}>{lib.name}</span>
             <span className="block truncate text-[13px] text-[var(--muted)]">
-              {lib.isOpen ? levelLabel(pct) : "Closed"}
-              {hours ? ` · ${hours}` : ""}
+              {[
+                lib.isOpen ? levelLabel(pct) : /^closed/i.test(hours ?? "") ? null : "Closed",
+                hours,
+              ].filter(Boolean).join(" · ")}
               {hasAreas ? ` · ${areas.length} areas` : ""}
             </span>
           </span>
           <Bar pct={pct} isOpen={lib.isOpen} className="hidden sm:block" />
           <span className="num text-right text-[15px]" style={{ color: lib.isOpen ? "var(--fg)" : "var(--muted)" }}>
-            {lib.isOpen ? `${pct}%` : "—"}
+            {lib.isOpen ? `${pct}%` : ""}
           </span>
         </button>
         <StarButton on={saved} onClick={onToggleSave} label={lib.name} />
@@ -171,10 +174,10 @@ function LibraryRow({
           {areas.map((a) => {
             const ap = Math.round(a.percentage * 100);
             return (
-              <li key={a.name} className="grid grid-cols-[1fr_40px] sm:grid-cols-[1fr_72px_36px] items-center gap-3">
+              <li key={a.name} className="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_72px_48px] items-center gap-3">
                 <span className={`truncate text-[13px] ${a.isOpen ? "text-[var(--fg-2)]" : "text-[var(--muted)]"}`} title={a.name}>{a.name}</span>
                 <Bar pct={ap} isOpen={a.isOpen} className="!hidden !h-1 !bg-[var(--line-strong)] sm:!block" />
-                <span className="num text-right text-[13px] text-[var(--fg-2)]">{a.isOpen ? `${ap}%` : "—"}</span>
+                <span className="num text-right text-[13px] text-[var(--fg-2)]">{a.isOpen ? `${ap}%` : "Closed"}</span>
               </li>
             );
           })}
@@ -319,14 +322,17 @@ export function UoftNow() {
 
   return (
     <div className="space-y-8">
-      <div className="text-[13px] text-[var(--muted)]">No live sensors at UofT · showing typical patterns</div>
+      <div className="flex flex-wrap items-center gap-2 text-[13px] text-[var(--muted)]">
+        <Tag>Estimate</Tag>
+        <span>UofT has no live sensors. These are typical patterns, not a live count.</span>
+      </div>
       <section className="card animate-rise overflow-hidden">
         <div className="grid gap-6 p-5 sm:p-7 md:grid-cols-[1fr_auto] md:items-end">
           <div>
-            <p className="eyebrow mb-3">Typical for this hour</p>
+            <p className="eyebrow mb-3">Typical for this hour (estimate)</p>
             <h2 className="text-balance text-[28px] font-semibold leading-[1.1] tracking-[-0.025em] sm:text-4xl">{label}</h2>
             <p className="mt-3 text-[15px] text-[var(--fg-2)]">
-              Based on historical busyness, not a live count. Book a room to guarantee a seat.
+              Book a room if you need a guaranteed seat.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               <Link href="/uoft" className="btn btn-primary">See libraries &amp; book</Link>
@@ -336,7 +342,7 @@ export function UoftNow() {
             <div className="md:text-right">
               <div className="flex items-baseline gap-2 md:justify-end">
                 <span className="num text-6xl font-medium leading-none sm:text-7xl" style={{ color: LEVEL_COLOR[level(pct)] }}>{value}</span>
-                <span className="text-sm text-[var(--muted)]">/ 10 busy</span>
+                <span className="text-sm text-[var(--muted)]">/ 10 typical</span>
               </div>
             </div>
           )}

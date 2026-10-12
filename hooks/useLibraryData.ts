@@ -58,7 +58,7 @@ export default function useLibraryData(uni: Uni) {
         try {
           const snapshots = live.flatMap((loc) => [
             { library_name: loc.name, floor_name: null, percent_full: Math.round(loc.percentage * 100) },
-            ...(loc.subLocs ?? []).map((sub) => ({
+            ...(Array.isArray(loc.subLocs) ? loc.subLocs : []).map((sub) => ({
               library_name: loc.name,
               floor_name:   sub.name,
               percent_full: Math.round(sub.percentage * 100),

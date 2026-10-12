@@ -31,7 +31,7 @@ export default function ReginaTab() {
     capacity: loc.capacity,
     isOpen: loc.isOpen,
     hourSummary: loc.hourSummary,
-    subLocs: loc.subLocs ?? [],
+    subLocs: Array.isArray(loc.subLocs) ? loc.subLocs : [],
   }));
 
   return (

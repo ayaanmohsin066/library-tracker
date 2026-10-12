@@ -172,7 +172,7 @@ export default function BestSpotCard({ libraries }: BestSpotCardProps) {
     a.percentage <= b.percentage ? a : b
   );
 
-  const bestFloor = (best.subLocs ?? [])
+  const bestFloor = (Array.isArray(best.subLocs) ? best.subLocs : [])
     .filter((s) => s.isOpen)
     .reduce<SubLocation | null>(
       (lowest, s) =>
