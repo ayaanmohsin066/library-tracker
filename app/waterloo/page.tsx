@@ -74,10 +74,11 @@ export default function WaterlooPage() {
         {/* Library card grid */}
         {hasData ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {sorted.map((lib) => (
+            {sorted.map((lib, i) => (
               <LibraryCard
                 key={lib.name}
                 {...lib}
+                index={i}
                 isFavorite={favorites.includes(lib.name)}
                 onToggleFavorite={() => toggleFavorite(lib.name)}
               />

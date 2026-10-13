@@ -136,6 +136,15 @@ const UNI_META: Record<UniId, { name: string; short: string; href: string; libCo
   uoft:     { name: "University of Toronto",  short: "UofT",      href: "/uoft",     libCount: 9 },
 };
 
+// Decorative per-campus color — purely for visual variety on the
+// selector cards. Kept separate from the green/amber/red occupancy
+// status system so the two never collide in meaning.
+const UNI_COLOR: Record<UniId, { fg: string; dim: string; glow: string }> = {
+  waterloo: { fg: "#818CF8", dim: "rgba(99,102,241,0.12)",  glow: "rgba(99,102,241,0.22)" },
+  regina:   { fg: "#FF9478", dim: "rgba(255,122,89,0.14)",  glow: "rgba(255,122,89,0.25)" },
+  uoft:     { fg: "#22D3C4", dim: "rgba(34,211,196,0.14)",  glow: "rgba(34,211,196,0.25)" },
+};
+
 // Inline SVG icons matching ti-school, ti-building-community, ti-building
 const UNI_ICONS: Record<UniId, React.ReactNode> = {
   waterloo: (
@@ -285,10 +294,11 @@ function LivePreviewCard() {
 }
 
 // ── University Selector Card ────────────────────────────────────────
-function UniCard({ uni }: { uni: UniId }) {
+function UniCard({ uni, index }: { uni: UniId; index: number }) {
   const [data, setData] = useState<LibItem[] | null>(null);
   const [hov,  setHov]  = useState(false);
-  const meta = UNI_META[uni];
+  const meta   = UNI_META[uni];
+  const accent = UNI_COLOR[uni];
 
   useEffect(() => {
     fetch(`/api/live?uni=${uni}`)
@@ -307,21 +317,25 @@ function UniCard({ uni }: { uni: UniId }) {
   const circ = 2 * Math.PI * R;
 
   return (
-    <Link href={meta.href} style={{ textDecoration: "none" }}>
+    <Link
+      href={meta.href}
+      className="focus-pop animate-pop-in"
+      style={{ textDecoration: "none", display: "block", animationDelay: `${index * 90}ms` }}
+    >
       <div
         onMouseEnter={() => setHov(true)}
         onMouseLeave={() => setHov(false)}
         style={{
           padding: "32px 24px 28px",
           borderRadius: 20,
-          background: hov ? "rgba(99,102,241,0.07)" : "rgba(13,20,36,0.72)",
-          border: `1px solid ${hov ? "rgba(99,102,241,0.38)" : "rgba(30,58,95,0.5)"}`,
+          background: hov ? accent.dim : "rgba(13,20,36,0.72)",
+          border: `1px solid ${hov ? accent.glow : "rgba(30,58,95,0.5)"}`,
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
           cursor: "pointer",
-          transform: hov ? "scale(1.03) translateY(-5px)" : "scale(1) translateY(0)",
-          boxShadow: hov ? "0 24px 64px rgba(99,102,241,0.15)" : "none",
-          transition: "transform 240ms ease, box-shadow 240ms ease, border-color 160ms ease, background 160ms ease",
+          transform: hov ? "scale(1.04) translateY(-6px) rotate(-0.5deg)" : "scale(1) translateY(0) rotate(0deg)",
+          boxShadow: hov ? `0 24px 64px ${accent.glow}` : "none",
+          transition: "transform 320ms var(--ease-spring), box-shadow 240ms ease, border-color 160ms ease, background 160ms ease",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -330,13 +344,17 @@ function UniCard({ uni }: { uni: UniId }) {
         }}
       >
         {/* University icon */}
-        <div style={{
-          width: 48, height: 48, borderRadius: "50%",
-          background: "rgba(99,102,241,0.12)",
-          border: "1px solid rgba(99,102,241,0.22)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          color: "#818CF8",
-        }}>
+        <div
+          style={{
+            width: 48, height: 48, borderRadius: "50%",
+            background: accent.dim,
+            border: `1px solid ${accent.glow}`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: accent.fg,
+            transform: hov ? "scale(1.1) rotate(-8deg)" : "scale(1) rotate(0deg)",
+            transition: "transform 320ms var(--ease-spring)",
+          }}
+        >
           {UNI_ICONS[uni]}
         </div>
 
@@ -395,9 +413,9 @@ function UniCard({ uni }: { uni: UniId }) {
           gap: 5,
           fontSize: 13,
           fontWeight: 600,
-          color: hov ? "#818CF8" : "#6B7FA3",
-          transition: "color 160ms ease, transform 160ms ease",
-          transform: hov ? "translateX(3px)" : "translateX(0)",
+          color: hov ? accent.fg : "#6B7FA3",
+          transition: "color 160ms ease, transform 220ms var(--ease-spring)",
+          transform: hov ? "translateX(5px)" : "translateX(0)",
         }}>
           View Live Data →
         </span>
@@ -543,6 +561,7 @@ export default function LandingPage() {
 
         {/* CTA Button */}
         <button
+          className="focus-pop"
           onMouseEnter={() => setCtaHov(true)}
           onMouseLeave={() => setCtaHov(false)}
           onClick={() => selectorRef.current?.scrollIntoView({ behavior: "smooth" })}
@@ -560,11 +579,11 @@ export default function LandingPage() {
             cursor: "pointer",
             letterSpacing: "-0.01em",
             fontFamily: "Sora, sans-serif",
-            transform: ctaHov ? "scale(1.05)" : "scale(1)",
+            transform: ctaHov ? "scale(1.07) translateY(-2px) rotate(-1deg)" : "scale(1) translateY(0) rotate(0deg)",
             boxShadow: ctaHov
               ? "0 0 40px rgba(99,102,241,0.5), 0 8px 32px rgba(99,102,241,0.25)"
               : "0 4px 20px rgba(99,102,241,0.2)",
-            transition: "transform 200ms ease, box-shadow 200ms ease",
+            transition: "transform 280ms var(--ease-spring), box-shadow 200ms ease",
           }}
         >
           Find Me a Seat →
@@ -653,7 +672,7 @@ export default function LandingPage() {
           maxWidth: 880,
           margin: "0 auto",
         }}>
-          {UNI_IDS.map((uni) => <UniCard key={uni} uni={uni} />)}
+          {UNI_IDS.map((uni, i) => <UniCard key={uni} uni={uni} index={i} />)}
         </div>
       </section>
 
@@ -728,19 +747,22 @@ export default function LandingPage() {
                   zIndex: 1,
                 }}
               >
-                <div style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 52, height: 52,
-                  borderRadius: "50%",
-                  backgroundColor: `${step.color}18`,
-                  border: `1.5px solid ${step.color}50`,
-                  color: step.color,
-                  marginBottom: 20,
-                  fontSize: "1.25rem", fontWeight: 900,
-                  fontFamily: "Sora, sans-serif",
-                }}>
+                <div
+                  className="step-badge"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 52, height: 52,
+                    borderRadius: "50%",
+                    backgroundColor: `${step.color}18`,
+                    border: `1.5px solid ${step.color}50`,
+                    color: step.color,
+                    marginBottom: 20,
+                    fontSize: "1.25rem", fontWeight: 900,
+                    fontFamily: "Sora, sans-serif",
+                  }}
+                >
                   {step.num}
                 </div>
                 <p style={{

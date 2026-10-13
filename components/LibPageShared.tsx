@@ -62,6 +62,46 @@ export function OccupancyTicker({ libs }: { libs: TickerLib[] }) {
   );
 }
 
+// ── Refresh button (spins on click, springs on hover) ───────────────
+function RefreshButton({ onClick }: { onClick: () => void }) {
+  const [spinning, setSpinning] = useState(false);
+  return (
+    <button
+      className="focus-pop"
+      onClick={() => {
+        onClick();
+        setSpinning(true);
+        setTimeout(() => setSpinning(false), 500);
+      }}
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 6,
+        padding: "7px 14px", borderRadius: 9, fontSize: 12, fontWeight: 600,
+        background: "rgba(99,102,241,0.1)",
+        border: "1px solid rgba(99,102,241,0.28)",
+        color: "#818CF8",
+        cursor: "pointer",
+        fontFamily: "Sora, sans-serif",
+        transition: "transform 200ms var(--ease-spring), background 150ms ease",
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px) scale(1.04)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0) scale(1)"; }}
+    >
+      <span
+        className="material-symbols-outlined"
+        style={{
+          fontSize: 14,
+          display: "inline-block",
+          transform: spinning ? "rotate(360deg)" : "rotate(0deg)",
+          transition: spinning ? "transform 500ms var(--ease-spring)" : "none",
+        }}
+      >
+        refresh
+      </span>
+      Refresh
+    </button>
+  );
+}
+
 // ── Live Page Header ────────────────────────────────────────────────
 export function LivePageHeader({
   title,
@@ -120,24 +160,11 @@ export function LivePageHeader({
             {dataUpdatedAt}
           </span>
         )}
-        <button
-          onClick={() => refetch()}
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            padding: "7px 14px", borderRadius: 9, fontSize: 12, fontWeight: 600,
-            background: "rgba(99,102,241,0.1)",
-            border: "1px solid rgba(99,102,241,0.28)",
-            color: "#818CF8",
-            cursor: "pointer",
-            fontFamily: "Sora, sans-serif",
-          }}
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: 14 }}>refresh</span>
-          Refresh
-        </button>
+        <RefreshButton onClick={refetch} />
         {showMapLink && (
           <Link
             href="/map"
+            className="focus-pop"
             style={{
               display: "inline-flex", alignItems: "center", gap: 6,
               padding: "7px 14px", borderRadius: 9, fontSize: 12, fontWeight: 600,
@@ -146,7 +173,10 @@ export function LivePageHeader({
               color: "#34D399",
               textDecoration: "none",
               fontFamily: "Sora, sans-serif",
+              transition: "transform 200ms var(--ease-spring), background 150ms ease",
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px) scale(1.04)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0) scale(1)"; }}
           >
             <span className="material-symbols-outlined" style={{ fontSize: 14 }}>map</span>
             Campus Map →
@@ -174,7 +204,8 @@ function StatChip({ label, value, accent }: { label: string; value: string; acce
         padding: "12px 18px",
         minWidth: 120,
         boxShadow: hov ? "0 0 28px rgba(99,102,241,0.13)" : "none",
-        transition: "border-color 180ms ease, box-shadow 180ms ease",
+        transform: hov ? "translateY(-3px)" : "translateY(0)",
+        transition: "border-color 180ms ease, box-shadow 180ms ease, transform 220ms var(--ease-spring)",
         cursor: "default",
       }}
     >
@@ -240,7 +271,7 @@ function ProgressRing({ pct, isOpen }: { pct: number; isOpen: boolean }) {
         strokeWidth="8" strokeLinecap="round"
         strokeDasharray="251.2" strokeDashoffset={offset}
         className="progress-ring-circle"
-        style={{ stroke }}
+        style={{ stroke, transition: "stroke-dashoffset 0.8s var(--ease-spring), stroke 0.4s ease" }}
       />
     </svg>
   );
@@ -257,13 +288,16 @@ export interface LibProps {
   subLocs: { name: string; percentage: number; people: number; capacity: number; isOpen: boolean }[];
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  index?: number;
 }
 
 export function LibraryCard({
   name, percentage, people, capacity, isOpen, hourSummary, subLocs,
-  isFavorite = false, onToggleFavorite,
+  isFavorite = false, onToggleFavorite, index = 0,
 }: LibProps) {
   const [floorsOpen, setFloorsOpen] = useState(true);
+  const [hov, setHov] = useState(false);
+  const [justFaved, setJustFaved] = useState(false);
   const pct          = Math.round(percentage * 100);
   const color        = occupancyColor(pct);
   const displayColor = isOpen ? color : "#6B7FA3";
@@ -271,8 +305,19 @@ export function LibraryCard({
 
   return (
     <div
-      className="glass-panel glass-highlight rounded-2xl"
-      style={{ opacity: isOpen ? 1 : 0.5, padding: 24, display: "flex", flexDirection: "column" }}
+      className="glass-panel glass-highlight rounded-2xl animate-pop-in"
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        opacity: isOpen ? 1 : 0.5,
+        padding: 24,
+        display: "flex",
+        flexDirection: "column",
+        transform: hov ? "translateY(-4px) scale(1.012)" : "translateY(0) scale(1)",
+        boxShadow: hov ? "0 20px 48px rgba(0,0,0,0.4)" : "none",
+        transition: "transform 320ms var(--ease-spring), box-shadow 280ms ease, opacity 300ms ease",
+        animationDelay: `${Math.min(index, 8) * 70}ms`,
+      }}
     >
       {/* ── Header row ─── */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 20 }}>
@@ -302,13 +347,24 @@ export function LibraryCard({
           </span>
           {onToggleFavorite && (
             <button
-              onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
+              className="focus-pop"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite();
+                if (!isFavorite) {
+                  setJustFaved(true);
+                  setTimeout(() => setJustFaved(false), 420);
+                }
+              }}
               aria-label={isFavorite ? "Remove from saved" : "Save library"}
               style={{
                 background: "none", border: "none", cursor: "pointer",
                 padding: 2, display: "flex", alignItems: "center",
                 color: isFavorite ? "#6366F1" : "#6B7FA3",
-                transition: "color 150ms ease",
+                transform: justFaved ? "scale(1.35) rotate(-12deg)" : "scale(1) rotate(0deg)",
+                transition: justFaved
+                  ? "transform 380ms var(--ease-spring)"
+                  : "color 150ms ease, transform 200ms var(--ease-spring)",
               }}
             >
               <span
@@ -397,7 +453,7 @@ export function LibraryCard({
               fontSize: 10, color: "#6B7FA3",
               display: "inline-block",
               transform: floorsOpen ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "transform 200ms ease",
+              transition: "transform 280ms var(--ease-spring)",
             }}>
               ▾
             </span>
