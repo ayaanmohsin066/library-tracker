@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Reveal from "@/components/ui/Reveal";
+import { colorFor, LEVEL_LABEL, levelFor, toPct } from "@/lib/occupancy";
 
 type Uni  = "waterloo" | "regina" | "uoft";
 type Need = "quiet" | "group" | "computer";
@@ -19,426 +21,215 @@ interface LiveLoc {
 const UNI_CONFIG: Record<Uni, { label: string; href: string; city: string }> = {
   waterloo: { label: "Waterloo", href: "/waterloo", city: "Waterloo, Ontario" },
   regina:   { label: "Regina",   href: "/regina",   city: "Regina, Saskatchewan" },
-  uoft:     { label: "UofT",     href: "/uoft",     city: "Toronto, Ontario" },
+  uoft:     { label: "Toronto",  href: "/uoft",     city: "Toronto, Ontario" },
 };
 
-const NEEDS: { key: Need; emoji: string; label: string }[] = [
-  { key: "quiet",    emoji: "🔇", label: "Quiet solo study" },
-  { key: "group",    emoji: "👥", label: "Group space" },
-  { key: "computer", emoji: "💻", label: "Computer lab" },
+const NEEDS: { key: Need; label: string; hint: string }[] = [
+  { key: "quiet",    label: "Quiet solo study", hint: "Lowest occupancy overall" },
+  { key: "group",    label: "Group space",      hint: "Libraries with group-study floors" },
+  { key: "computer", label: "A computer",       hint: "Sends you to the lab finder" },
 ];
 
-function ringColor(pct: number): string {
-  return pct > 80 ? "#ffb4ab" : pct > 50 ? "#f59e0b" : "#34D399";
-}
+type Outcome =
+  | { kind: "result"; loc: LiveLoc }
+  | { kind: "computer" | "uoft" | "none_open" | "failed" };
 
 function mapsQuery(name: string, city: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} ${city}`)}`;
 }
 
-// ── Small 64px progress ring ─────────────────────────────────────────
-function SmallRing({ pct }: { pct: number }) {
-  const R    = 26;
-  const circ = 2 * Math.PI * R;
-  const color = ringColor(pct);
+function Ring({ pct }: { pct: number }) {
+  const R = 30;
+  const C = 2 * Math.PI * R;
   return (
-    <div style={{ position: "relative", width: 64, height: 64, flexShrink: 0 }}>
-      <svg width="64" height="64" style={{ transform: "rotate(-90deg)" }}>
-        <circle cx="32" cy="32" r={R} fill="none" stroke="rgba(30,58,95,0.5)" strokeWidth="5" />
-        <circle
-          cx="32" cy="32" r={R} fill="none"
-          stroke={color} strokeWidth="5" strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={circ * (1 - pct / 100)}
-          style={{ transition: "stroke-dashoffset 0.7s ease, stroke 0.4s ease" }}
-        />
-      </svg>
-      <div style={{
-        position: "absolute", inset: 0,
-        display: "flex", alignItems: "center", justifyContent: "center",
-      }}>
-        <span style={{
-          fontSize: 11, fontWeight: 800, color,
-          fontFamily: "var(--font-geist-mono), monospace",
-          lineHeight: 1,
-        }}>
-          {pct}%
-        </span>
-      </div>
+    <svg width="76" height="76" viewBox="0 0 76 76" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <circle cx="38" cy="38" r={R} fill="none" stroke="var(--ink-3)" strokeWidth="4" />
+      <circle
+        cx="38" cy="38" r={R} fill="none" stroke={colorFor(pct)} strokeWidth="4" strokeLinecap="round"
+        strokeDasharray={C} strokeDashoffset={C * (1 - pct / 100)}
+        className="progress-ring-circle"
+      />
+      <text x="38" y="43" textAnchor="middle" fill="var(--paper-0)" style={{ font: "600 15px var(--font-mono)" }}>
+        {pct}%
+      </text>
+    </svg>
+  );
+}
+
+function Message({ title, body, href, cta }: { title: string; body: string; href: string; cta: string }) {
+  return (
+    <div className="fms-result animate-fade-up">
+      <h3 className="display" style={{ fontSize: 32, margin: "0 0 8px" }}>{title}</h3>
+      <p style={{ margin: "0 0 24px", color: "var(--paper-1)", fontSize: "var(--text-sm)", lineHeight: 1.6 }}>{body}</p>
+      <Link href={href} className="btn btn-ghost">{cta} <span className="btn-arrow" aria-hidden="true">→</span></Link>
     </div>
   );
 }
 
-// ── Special result card (non-data outcomes) ──────────────────────────
-function ResultSpecial({
-  icon, title, subtitle, href, linkLabel,
-}: {
-  icon: string; title: string; subtitle: string; href: string; linkLabel: string;
-}) {
-  return (
-    <div className="glass-panel rounded-2xl" style={{ padding: 28, textAlign: "center" }}>
-      <div style={{ fontSize: 36, marginBottom: 12 }}>{icon}</div>
-      <h3 style={{
-        margin: "0 0 8px", fontSize: "1rem", fontWeight: 700,
-        color: "#e2e2e8", fontFamily: "Sora, sans-serif",
-      }}>
-        {title}
-      </h3>
-      <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6B7FA3", lineHeight: 1.6 }}>
-        {subtitle}
-      </p>
-      <Link
-        href={href}
-        style={{
-          display: "inline-flex", alignItems: "center", gap: 6,
-          padding: "10px 24px", borderRadius: 9999, fontSize: 13, fontWeight: 700,
-          background: "#6366F1", color: "#0A0F1C", textDecoration: "none",
-          fontFamily: "Sora, sans-serif",
-        }}
-      >
-        {linkLabel}
-      </Link>
-    </div>
-  );
-}
-
-// ── Best spot result card ────────────────────────────────────────────
-function ResultCard({
-  result,
-  uniMeta,
-}: {
-  result: LiveLoc;
-  uniMeta: { label: string; href: string; city: string };
-}) {
-  const pct = Math.round(result.percentage * 100);
-
-  return (
-    <div className="glass-panel rounded-2xl" style={{ padding: 28 }}>
-      <p style={{
-        margin: "0 0 16px", fontSize: 11, fontWeight: 700,
-        textTransform: "uppercase", letterSpacing: "0.15em", color: "#6B7FA3",
-      }}>
-        Best spot right now:
-      </p>
-
-      {/* Ring + name row */}
-      <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 20 }}>
-        <SmallRing pct={pct} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h3 style={{
-            margin: "0 0 5px",
-            fontSize: "clamp(1rem, 2.5vw, 1.25rem)",
-            fontWeight: 800, letterSpacing: "-0.02em",
-            color: "#818CF8", fontFamily: "Sora, sans-serif", lineHeight: 1.2,
-          }}>
-            {result.name}
-          </h3>
-          <p style={{ margin: 0, fontSize: 12, color: "#6B7FA3", lineHeight: 1.55 }}>
-            {result.hourSummary}
-          </p>
-        </div>
-      </div>
-
-      {/* Action buttons */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-        <a
-          href={mapsQuery(result.name, uniMeta.city)}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            padding: "9px 20px", borderRadius: 9999, fontSize: 13, fontWeight: 700,
-            background: "#6366F1", color: "#0A0F1C", textDecoration: "none",
-            fontFamily: "Sora, sans-serif",
-          }}
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: 15 }}>directions</span>
-          Get Directions →
-        </a>
-        <Link
-          href={uniMeta.href}
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            padding: "9px 20px", borderRadius: 9999, fontSize: 13, fontWeight: 600,
-            background: "rgba(99,102,241,0.1)",
-            border: "1px solid rgba(99,102,241,0.28)",
-            color: "#818CF8", textDecoration: "none",
-            fontFamily: "Sora, sans-serif",
-          }}
-        >
-          See all libraries →
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-// ── Main component ───────────────────────────────────────────────────
-export default function FindMeSeat({
-  sectionRef,
-}: {
-  sectionRef?: React.RefObject<HTMLElement>;
-}) {
-  const [uni,     setUni]     = useState<Uni | null>(null);
-  const [need,    setNeed]    = useState<Need | null>(null);
+export default function FindMeSeat() {
+  const [uni, setUni] = useState<Uni | null>(null);
+  const [need, setNeed] = useState<Need | null>(null);
   const [loading, setLoading] = useState(false);
-  const [result,  setResult]  = useState<LiveLoc | null>(null);
-  const [errKey,  setErrKey]  = useState<string | null>(null);
-  const [show,    setShow]    = useState(false);
-
-  function resetResult() {
-    setResult(null);
-    setErrKey(null);
-    setShow(false);
-  }
+  const [outcome, setOutcome] = useState<Outcome | null>(null);
 
   async function handleFind() {
     if (!uni || !need) return;
-    resetResult();
+    setOutcome(null);
 
-    if (need === "computer") {
-      setErrKey("computer");
-      setTimeout(() => setShow(true), 30);
-      return;
-    }
-
-    if (uni === "uoft") {
-      setErrKey("uoft_no_live");
-      setTimeout(() => setShow(true), 30);
-      return;
-    }
+    if (need === "computer") return setOutcome({ kind: "computer" });
+    if (uni === "uoft") return setOutcome({ kind: "uoft" });
 
     setLoading(true);
     try {
-      const res  = await fetch(`/api/live?uni=${uni}`);
-      const json = await res.json() as { live?: unknown };
+      const res = await fetch(`/api/live?uni=${uni}`);
+      if (!res.ok) throw new Error(String(res.status)); // a 5xx is "unavailable", not "all closed"
+      const json = (await res.json()) as { live?: unknown };
       const locs: LiveLoc[] = Array.isArray(json.live) ? (json.live as LiveLoc[]) : [];
       const open = locs.filter((l) => l.isOpen);
+      if (!open.length) return setOutcome({ kind: "none_open" });
 
-      if (!open.length) {
-        setErrKey("none_open");
-      } else {
-        let sorted = [...open].sort((a, b) => a.percentage - b.percentage);
-        if (need === "group") {
-          const withGroup = sorted.filter((l) =>
-            l.subLocs?.some((s) => s.name.toLowerCase().includes("group"))
-          );
-          if (withGroup.length) sorted = withGroup;
-        }
-        setResult(sorted[0]);
+      let sorted = [...open].sort((a, b) => a.percentage - b.percentage);
+      if (need === "group") {
+        const withGroup = sorted.filter(
+          (l) => Array.isArray(l.subLocs) && l.subLocs.some((s) => s.name.toLowerCase().includes("group")),
+        );
+        if (withGroup.length) sorted = withGroup;
       }
+      setOutcome({ kind: "result", loc: sorted[0] });
     } catch {
-      setErrKey("fetch_failed");
+      setOutcome({ kind: "failed" });
     } finally {
       setLoading(false);
-      setTimeout(() => setShow(true), 30);
     }
   }
 
-  const canFind   = uni !== null && need !== null && !loading;
-  const uniMeta   = uni ? UNI_CONFIG[uni] : null;
-  const hasResult = result !== null || errKey !== null;
+  const meta = uni ? UNI_CONFIG[uni] : null;
 
   return (
-    <section
-      ref={sectionRef}
-      style={{
-        position: "relative",
-        zIndex: 1,
-        backgroundColor: "rgba(10,15,28,0.98)",
-        borderTop: "1px solid rgba(30,58,95,0.5)",
-        padding: "80px 24px 96px",
-      }}
-    >
-      <style>{`
-        @keyframes fms-slide-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+    <section id="finder" className="fms" aria-labelledby="fms-title">
+      <div className="container-lc fms-grid">
+        <div>
+          <Reveal><p className="eyebrow">02 — Find me a seat</p></Reveal>
+          <Reveal delay={60}>
+            <h2 id="fms-title" className="display text-balance" style={{ fontSize: "clamp(2.25rem, 5vw, 3.75rem)", margin: "12px 0 12px", maxWidth: "12ch" }}>
+              Two questions, <em style={{ color: "var(--paper-1)" }}>one answer.</em>
+            </h2>
+          </Reveal>
+          <Reveal delay={120}>
+            <p style={{ color: "var(--paper-1)", maxWidth: "44ch", margin: "0 0 var(--s-10)" }}>
+              We check the live feed and point you at the emptiest open library that fits.
+            </p>
+          </Reveal>
 
-      <div style={{ maxWidth: 680, margin: "0 auto" }}>
-
-        {/* Section heading */}
-        <p style={{
-          fontSize: 11, fontWeight: 700, textTransform: "uppercase",
-          letterSpacing: "0.22em", color: "#6366F1",
-          marginBottom: 14, fontFamily: "Sora, sans-serif",
-        }}>
-          ✦ Smart Recommendation
-        </p>
-        <h2 style={{
-          fontSize: "clamp(1.6rem, 4vw, 2.5rem)", fontWeight: 800,
-          letterSpacing: "-0.02em", color: "#e2e2e8",
-          marginBottom: 10, fontFamily: "Sora, sans-serif",
-        }}>
-          Find Me a Seat
-        </h2>
-        <p style={{
-          fontSize: 15, color: "#6B7FA3", marginBottom: 52, lineHeight: 1.6,
-        }}>
-          Tell us where you are and what you need — we&apos;ll surface the quietest open spot right now.
-        </p>
-
-        {/* ── Step 1: University ── */}
-        <div style={{ marginBottom: 36 }}>
-          <p style={{
-            fontSize: 11, fontWeight: 700, textTransform: "uppercase",
-            letterSpacing: "0.15em", color: "#6B7FA3", marginBottom: 14,
-          }}>
-            Step 1 — Your university
-          </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-            {(Object.keys(UNI_CONFIG) as Uni[]).map((u) => {
-              const sel = uni === u;
-              return (
+          <fieldset className="fms-step">
+            <legend className="eyebrow">Where are you?</legend>
+            <div className="fms-options">
+              {(Object.keys(UNI_CONFIG) as Uni[]).map((u) => (
                 <button
                   key={u}
-                  onClick={() => { setUni(u); resetResult(); }}
-                  style={{
-                    padding: "10px 24px", borderRadius: 9999, fontSize: 14, fontWeight: 600,
-                    cursor: "pointer",
-                    background: sel ? "#6366F1" : "rgba(13,20,36,0.8)",
-                    color:      sel ? "#0A0F1C" : "#b9cacb",
-                    border:     sel ? "1px solid transparent" : "1px solid rgba(30,58,95,0.5)",
-                    boxShadow:  sel ? "0 0 20px rgba(99,102,241,0.4)" : "none",
-                    fontFamily: "Sora, sans-serif",
-                    transition: "background 150ms, color 150ms, box-shadow 150ms",
-                    minHeight: 42,
-                  }}
+                  type="button"
+                  className="chip"
+                  aria-pressed={uni === u}
+                  onClick={() => { setUni(u); setOutcome(null); }}
                 >
                   {UNI_CONFIG[u].label}
                 </button>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="fms-step" disabled={!uni} data-disabled={!uni ? "true" : "false"}>
+            <legend className="eyebrow">What do you need?</legend>
+            <div className="fms-options">
+              {NEEDS.map((n) => (
+                <button
+                  key={n.key}
+                  type="button"
+                  className="chip"
+                  aria-pressed={need === n.key}
+                  title={n.hint}
+                  onClick={() => { setNeed(n.key); setOutcome(null); }}
+                >
+                  {n.label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleFind}
+            disabled={!uni || !need || loading}
+            aria-busy={loading}
+            style={{ marginTop: 8, minWidth: 180 }}
+          >
+            {loading ? <><span className="spinner" aria-hidden="true" /> Checking live data…</> : <>Find the best spot <span className="btn-arrow" aria-hidden="true">→</span></>}
+          </button>
         </div>
 
-        {/* ── Step 2: What do you need? (appears after Step 1) ── */}
-        {uni && (
-          <div style={{ marginBottom: 36, animation: "fms-slide-in 300ms ease both" }}>
-            <p style={{
-              fontSize: 11, fontWeight: 700, textTransform: "uppercase",
-              letterSpacing: "0.15em", color: "#6B7FA3", marginBottom: 14,
-            }}>
-              Step 2 — What do you need?
-            </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-              {NEEDS.map(({ key, emoji, label }) => {
-                const sel = need === key;
-                return (
-                  <button
-                    key={key}
-                    onClick={() => { setNeed(key); resetResult(); }}
-                    style={{
-                      display: "inline-flex", alignItems: "center", gap: 8,
-                      padding: "10px 20px", borderRadius: 9999, fontSize: 14, fontWeight: 600,
-                      cursor: "pointer",
-                      background:   sel ? "rgba(99,102,241,0.15)" : "rgba(13,20,36,0.8)",
-                      color:        sel ? "#818CF8" : "#b9cacb",
-                      border:       sel ? "1px solid rgba(99,102,241,0.45)" : "1px solid rgba(30,58,95,0.5)",
-                      boxShadow:    sel ? "0 0 16px rgba(99,102,241,0.2)" : "none",
-                      fontFamily:  "Sora, sans-serif",
-                      transition:  "background 150ms, color 150ms, border-color 150ms, box-shadow 150ms",
-                      minHeight: 42,
-                    }}
-                  >
-                    <span>{emoji}</span>
-                    {label}
-                  </button>
-                );
-              })}
+        {/* Result — announced to screen readers when it changes */}
+        <div className="fms-panel" aria-live="polite">
+          {!outcome && !loading && (
+            <div className="fms-empty">
+              <p className="eyebrow" style={{ marginBottom: 12 }}>Your result</p>
+              <p style={{ margin: 0, color: "var(--paper-2)", fontSize: "var(--text-sm)", lineHeight: 1.6, maxWidth: "30ch" }}>
+                {!uni ? "Pick a campus to start." : !need ? "Now pick what you need." : "Press “Find the best spot”."}
+              </p>
             </div>
-          </div>
-        )}
+          )}
+          {loading && (
+            <div className="fms-result">
+              <span className="animate-shimmer" style={{ display: "block", height: 14, width: 120, borderRadius: 2, marginBottom: 20 }} />
+              <span className="animate-shimmer" style={{ display: "block", height: 36, width: "70%", borderRadius: 2, marginBottom: 12 }} />
+              <span className="animate-shimmer" style={{ display: "block", height: 12, width: "50%", borderRadius: 2 }} />
+            </div>
+          )}
 
-        {/* ── Step 3: Find button (appears after Step 2) ── */}
-        {uni && need && (
-          <div style={{ marginBottom: hasResult ? 36 : 0, animation: "fms-slide-in 300ms ease both" }}>
-            <button
-              onClick={handleFind}
-              disabled={!canFind}
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
-                background: canFind ? "#6366F1" : "rgba(30,58,95,0.5)",
-                color:      canFind ? "#0A0F1C" : "#6B7FA3",
-                fontWeight: 700, fontSize: "0.95rem",
-                padding: "14px 34px", borderRadius: 9999,
-                border: "none", cursor: canFind ? "pointer" : "default",
-                fontFamily: "Sora, sans-serif",
-                boxShadow: canFind ? "0 4px 20px rgba(99,102,241,0.28)" : "none",
-                transition: "background 200ms, box-shadow 200ms",
-                minHeight: 48,
-              }}
-            >
-              {loading ? (
-                <>
-                  <span style={{
-                    display: "inline-block",
-                    width: 14, height: 14,
-                    border: "2px solid rgba(10,15,28,0.35)",
-                    borderTopColor: "#0A0F1C",
-                    borderRadius: "50%",
-                    animation: "fms-spin 0.7s linear infinite",
-                  }} />
-                  Searching…
-                </>
-              ) : (
-                "Find Best Spot →"
-              )}
-            </button>
-            <style>{`@keyframes fms-spin { to { transform: rotate(360deg); } }`}</style>
-          </div>
-        )}
+          {outcome?.kind === "result" && meta && (() => {
+            const pct = toPct(outcome.loc.percentage);
+            return (
+              <div className="fms-result animate-fade-up">
+                <p className="eyebrow" style={{ marginBottom: 16, color: "var(--quiet)" }}>Best spot right now</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 24 }}>
+                  <Ring pct={pct} />
+                  <div style={{ minWidth: 0 }}>
+                    <h3 className="display" style={{ fontSize: "clamp(1.75rem, 3vw, 2.25rem)", margin: "0 0 4px", lineHeight: 1.05 }}>
+                      {outcome.loc.name}
+                    </h3>
+                    <p style={{ margin: 0, fontSize: "var(--text-sm)", color: "var(--paper-1)" }}>
+                      {LEVEL_LABEL[levelFor(pct)]} · {outcome.loc.people.toLocaleString()} of {outcome.loc.capacity.toLocaleString()} seats taken
+                    </p>
+                    <p style={{ margin: "2px 0 0", fontSize: "var(--text-xs)", color: "var(--paper-2)" }}>{outcome.loc.hourSummary}</p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                  <a href={mapsQuery(outcome.loc.name, meta.city)} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+                    Directions <span className="btn-arrow" aria-hidden="true">↗</span>
+                  </a>
+                  <Link href={meta.href} className="btn btn-ghost">All {meta.label} libraries</Link>
+                </div>
+              </div>
+            );
+          })()}
 
-        {/* ── Result area ── */}
-        {hasResult && (
-          <div style={{
-            opacity: show ? 1 : 0,
-            transform: show ? "translateY(0)" : "translateY(16px)",
-            transition: "opacity 400ms ease, transform 400ms ease",
-          }}>
-            {errKey === "computer" && (
-              <ResultSpecial
-                icon="💻"
-                title="Head to the Computer Labs"
-                subtitle="Filter by building, hours, and amenities — find an available lab seat instantly."
-                href="/labs"
-                linkLabel="Browse Computer Labs →"
-              />
-            )}
-            {errKey === "uoft_no_live" && (
-              <ResultSpecial
-                icon="📊"
-                title="Live data unavailable for UofT"
-                subtitle="We show historical busy patterns for University of Toronto. Click below to see typical times and book a room."
-                href="/uoft"
-                linkLabel="View UofT Libraries →"
-              />
-            )}
-            {errKey === "none_open" && uniMeta && (
-              <ResultSpecial
-                icon="🌙"
-                title="No libraries open right now"
-                subtitle="All libraries at this university are currently closed. Check back during opening hours."
-                href={uniMeta.href}
-                linkLabel={`See ${uniMeta.label} Libraries →`}
-              />
-            )}
-            {errKey === "fetch_failed" && (
-              <ResultSpecial
-                icon="⚠️"
-                title="Couldn't fetch live data"
-                subtitle="Something went wrong connecting to the server. Try again in a moment."
-                href={uniMeta?.href ?? "/"}
-                linkLabel="View Libraries →"
-              />
-            )}
-            {result && uniMeta && (
-              <ResultCard result={result} uniMeta={uniMeta} />
-            )}
-          </div>
-        )}
+          {outcome?.kind === "computer" && (
+            <Message title="Try the computer labs" body="Filter labs by building, hours and software to find an open machine." href="/labs" cta="Browse labs" />
+          )}
+          {outcome?.kind === "uoft" && (
+            <Message title="No live feed for Toronto" body="UofT doesn't publish live occupancy. We show how busy each library usually is by hour instead." href="/uoft" cta="See typical busyness" />
+          )}
+          {outcome?.kind === "none_open" && meta && (
+            <Message title="Everything's closed" body={`No ${meta.label} libraries are open right now. Opening hours are on each library card.`} href={meta.href} cta={`See ${meta.label} hours`} />
+          )}
+          {outcome?.kind === "failed" && (
+            <div className="fms-result animate-fade-up">
+              <h3 className="display" style={{ fontSize: 32, margin: "0 0 8px" }}>Couldn&apos;t reach the live feed</h3>
+              <p style={{ margin: "0 0 24px", color: "var(--paper-1)", fontSize: "var(--text-sm)" }}>The occupancy service didn&apos;t respond. This is usually temporary.</p>
+              <button type="button" className="btn btn-ghost" onClick={handleFind}>Try again</button>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );

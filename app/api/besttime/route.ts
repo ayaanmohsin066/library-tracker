@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+const NOT_CONFIGURED_BODY = { error: "storage_not_configured", available: false };
+
+/** Returns null (→ 503) instead of throwing when Supabase env vars are missing. */
+function db(): SupabaseClient | null {
+  try { return getSupabase(); } catch { return null; }
+}
 
 function fmtHour(h: number): string {
   const h12 = h % 12 || 12;
@@ -7,6 +15,8 @@ function fmtHour(h: number): string {
 }
 
 export async function GET(request: NextRequest) {
+  const client = db();
+  if (!client) return NextResponse.json(NOT_CONFIGURED_BODY, { status: 503 });
   const library   = request.nextUrl.searchParams.get("library");
   const dowParam  = request.nextUrl.searchParams.get("dow");
   const tzParam   = request.nextUrl.searchParams.get("tz"); // minutes behind UTC (getTimezoneOffset())
@@ -24,7 +34,7 @@ export async function GET(request: NextRequest) {
 
   const since = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString();
 
-  const { data, error } = await getSupabase()
+  const { data, error } = await client
     .from("occupancy_snapshots")
     .select("percent_full, recorded_at")
     .eq("library_name", library)

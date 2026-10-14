@@ -48,40 +48,23 @@ export default function ThemeToggle() {
   const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem("lc-theme");
-    if (stored === "light") setIsDark(false);
+    setIsDark(!document.documentElement.classList.contains("light"));
   }, []);
 
   function toggle() {
     const next = !isDark;
     setIsDark(next);
-    if (next) {
-      document.documentElement.classList.remove("light");
-      localStorage.setItem("lc-theme", "dark");
-    } else {
-      document.documentElement.classList.add("light");
-      localStorage.setItem("lc-theme", "light");
-    }
+    document.documentElement.classList.toggle("light", !next);
+    try { localStorage.setItem("lc-theme", next ? "dark" : "light"); } catch { /* private mode */ }
   }
 
   return (
     <button
+      type="button"
       onClick={toggle}
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 36,
-        height: 36,
-        borderRadius: "50%",
-        backgroundColor: "var(--bg-elevated)",
-        border: "1px solid var(--border-strong)",
-        color: "var(--text-secondary)",
-        cursor: "pointer",
-        flexShrink: 0,
-        transition: "transform 150ms ease",
-      }}
+      aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+      aria-pressed={!isDark}
+      className="nav-icon-btn"
     >
       {isDark ? <SunIcon /> : <MoonIcon />}
     </button>

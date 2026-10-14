@@ -49,9 +49,9 @@ const CARD_GLOW: Record<Level, string> = {
 };
 
 const BADGE_STYLE: Record<Level, React.CSSProperties> = {
-  low:    { color: "var(--green)", backgroundColor: "var(--green-dim)", border: "1px solid rgba(16,185,129,0.2)" },
-  medium: { color: "var(--amber)", backgroundColor: "var(--amber-dim)", border: "1px solid rgba(245,158,11,0.2)" },
-  high:   { color: "var(--red)",   backgroundColor: "var(--red-dim)",   border: "1px solid rgba(239,68,68,0.2)" },
+  low:    { color: "var(--green)", backgroundColor: "var(--green-dim)", border: "1px solid rgba(111,211,168,0.2)" },
+  medium: { color: "var(--amber)", backgroundColor: "var(--amber-dim)", border: "1px solid rgba(242,169,59,0.2)" },
+  high:   { color: "var(--red)",   backgroundColor: "var(--red-dim)",   border: "1px solid rgba(242,115,90,0.2)" },
 };
 
 const BAR_CLASS: Record<Level, string> = {
@@ -61,21 +61,21 @@ const BAR_CLASS: Record<Level, string> = {
 };
 
 const FLOOR_BG: Record<Level, string> = {
-  low:    "rgba(16,185,129,0.14)",
-  medium: "rgba(245,158,11,0.14)",
-  high:   "rgba(239,68,68,0.14)",
+  low:    "rgba(111,211,168,0.14)",
+  medium: "rgba(242,169,59,0.14)",
+  high:   "rgba(242,115,90,0.14)",
 };
 
 const FLOOR_BG_ACTIVE: Record<Level, string> = {
-  low:    "rgba(16,185,129,0.3)",
-  medium: "rgba(245,158,11,0.3)",
-  high:   "rgba(239,68,68,0.3)",
+  low:    "rgba(111,211,168,0.3)",
+  medium: "rgba(242,169,59,0.3)",
+  high:   "rgba(242,115,90,0.3)",
 };
 
 const FLOOR_DEPTH: Record<Level, string> = {
-  low:    "rgba(16,185,129,0.5)",
-  medium: "rgba(245,158,11,0.5)",
-  high:   "rgba(239,68,68,0.5)",
+  low:    "rgba(111,211,168,0.5)",
+  medium: "rgba(242,169,59,0.5)",
+  high:   "rgba(242,115,90,0.5)",
 };
 
 const FLOOR_TEXT: Record<Level, string> = {
@@ -334,8 +334,8 @@ export default function LibraryCard({
             width: "100%",
             padding: "9px 0",
             borderRadius: "10px",
-            border: "1px solid rgba(6,182,212,0.3)",
-            backgroundColor: showStack ? "rgba(6,182,212,0.1)" : "transparent",
+            border: "1px solid rgba(214,166,92,0.3)",
+            backgroundColor: showStack ? "rgba(214,166,92,0.1)" : "transparent",
             color: "var(--accent)",
             fontSize: "12.5px",
             fontWeight: 600,

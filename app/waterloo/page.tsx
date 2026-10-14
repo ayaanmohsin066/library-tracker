@@ -36,16 +36,17 @@ export default function WaterlooPage() {
   const { favorites, toggleFavorite, removeFavorite } = useFavorites();
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-base)" }}>
+    <div>
 
       {/* ── Occupancy Ticker ─────────────────────────────────────── */}
       {hasData && <OccupancyTicker libs={libraries} />}
 
       {/* ── Page content ─────────────────────────────────────────── */}
-      <div style={{ padding: "0 24px 48px", maxWidth: 1400, margin: "0 auto" }}>
+      <div className="container-lc" style={{ paddingBottom: "var(--s-16)" }}>
 
         <LivePageHeader
           title="University of Waterloo"
+          description="Each library with a live occupancy feed, floor by floor. Open libraries are listed quietest first."
           dataUpdatedAt={dataUpdatedAt}
           refetch={refetch}
           showMapLink
@@ -73,7 +74,7 @@ export default function WaterlooPage() {
 
         {/* Library card grid */}
         {hasData ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="lib-grid">
             {sorted.map((lib, i) => (
               <LibraryCard
                 key={lib.name}
@@ -85,24 +86,24 @@ export default function WaterlooPage() {
             ))}
           </div>
         ) : isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="lib-grid">
             {[1, 2, 3].map((i) => <SkeletonLibCard key={i} />)}
           </div>
         ) : isError ? (
           <ErrorBanner onRetry={refetch} />
         ) : (
-          <p style={{ fontSize: 14, color: "#6B7FA3" }}>No data available.</p>
+          <p style={{ fontSize: 14, color: "var(--paper-2)" }}>No data available.</p>
         )}
 
         {/* Footer */}
-        <div style={{ marginTop: 48, paddingTop: 20, borderTop: "1px solid rgba(30,58,95,0.35)" }}>
-          <p style={{ fontSize: 12, color: "#6B7FA3" }}>
+        <div className="page-note">
+          <p style={{ margin: 0 }}>
             Data via Waitz · Not affiliated with the University of Waterloo ·{" "}
             <a
               href="https://lib.uwaterloo.ca"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: "#818CF8", textDecoration: "none" }}
+              className="link-u" style={{ color: "var(--paper-1)" }}
             >
               Official library site →
             </a>

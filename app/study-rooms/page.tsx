@@ -43,9 +43,9 @@ function matchesFilter(r: RoomEntry, f: FilterKey): boolean {
 // ── Noise badge ──────────────────────────────────────────────────────────────
 
 const NOISE_META = {
-  silent:        { label: "Silent",        color: "#818cf8", bg: "rgba(129,140,248,0.12)" },
-  quiet:         { label: "Quiet",         color: "#34D399", bg: "rgba(52,211,153,0.12)"  },
-  collaborative: { label: "Collaborative", color: "#f59e0b", bg: "rgba(245,158,11,0.12)"  },
+  silent:        { label: "Silent",        color: "var(--brass)", bg: "rgba(214,166,92,0.12)" },
+  quiet:         { label: "Quiet",         color: "var(--quiet)", bg: "rgba(111,211,168,0.12)"  },
+  collaborative: { label: "Collaborative", color: "var(--busy)", bg: "rgba(242,169,59,0.12)"  },
 };
 
 function NoiseBadge({ level }: { level: StudySpace["noiseLevel"] }) {
@@ -54,7 +54,7 @@ function NoiseBadge({ level }: { level: StudySpace["noiseLevel"] }) {
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 4,
       fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 6,
-      backgroundColor: n.bg, color: n.color, border: `1px solid ${n.color}44`,
+      backgroundColor: n.bg, color: n.color, border: `1px solid color-mix(in srgb, ${n.color} 30%, transparent)`,
       whiteSpace: "nowrap",
     }}>
       {n.label}
@@ -72,17 +72,17 @@ function TypeBadge({ room }: { room: RoomEntry }) {
     : available247
     ? "24 / 7 access"
     : "First-come, first-served";
-  const color = bookable ? "#818CF8" : available247 ? "#34D399" : "#f59e0b";
+  const color = bookable ? "var(--brass)" : available247 ? "var(--quiet)" : "var(--busy)";
   const bg    = bookable
-    ? "rgba(129,140,248,0.1)"
+    ? "rgba(214,166,92,0.1)"
     : available247
-    ? "rgba(52,211,153,0.1)"
-    : "rgba(245,158,11,0.1)";
+    ? "rgba(111,211,168,0.1)"
+    : "rgba(242,169,59,0.1)";
   return (
     <span style={{
       display: "inline-flex", alignItems: "center",
       fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 6,
-      backgroundColor: bg, color, border: `1px solid ${color}44`,
+      backgroundColor: bg, color, border: `1px solid color-mix(in srgb, ${color} 30%, transparent)`,
       whiteSpace: "nowrap",
     }}>
       {label}
@@ -104,12 +104,10 @@ function RoomCard({ room }: { room: RoomEntry }) {
       style={{
         padding: "22px 24px",
         borderRadius: 18,
-        background: hov ? "rgba(99,102,241,0.05)" : "rgba(13,20,36,0.72)",
-        border: `1px solid ${hov ? "rgba(99,102,241,0.35)" : "rgba(30,58,95,0.45)"}`,
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
+        background: hov ? "rgba(214,166,92,0.05)" : "var(--ink-1)",
+        border: `1px solid ${hov ? "rgba(214,166,92,0.35)" : "var(--line)"}`,
         transition: "border-color 180ms ease, background 180ms ease, box-shadow 180ms ease",
-        boxShadow: hov ? "0 8px 32px rgba(99,102,241,0.1)" : "none",
+        boxShadow: hov ? "0 8px 32px rgba(214,166,92,0.1)" : "none",
         display: "flex",
         flexDirection: "column",
         gap: 14,
@@ -121,21 +119,21 @@ function RoomCard({ room }: { room: RoomEntry }) {
           margin: "0 0 3px",
           fontSize: 11, fontWeight: 700,
           textTransform: "uppercase", letterSpacing: "0.12em",
-          color: "#6B7FA3",
-          fontFamily: "Sora, sans-serif",
+          color: "var(--paper-2)",
+          fontFamily: "var(--font-sans)",
         }}>
           {room.building.name}
         </p>
         <h3 style={{
           margin: 0,
           fontSize: "1rem", fontWeight: 700, lineHeight: 1.3,
-          color: "#e2e2e8", fontFamily: "Sora, sans-serif",
+          color: "var(--paper-0)", fontFamily: "var(--font-sans)",
           letterSpacing: "-0.01em",
         }}>
           {room.name}
         </h3>
         {room.floor && (
-          <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6B7FA3" }}>
+          <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--paper-2)" }}>
             {room.floor}
           </p>
         )}
@@ -148,8 +146,8 @@ function RoomCard({ room }: { room: RoomEntry }) {
         {room.keycardRequired && (
           <span style={{
             fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 6,
-            backgroundColor: "rgba(255,180,171,0.1)", color: "#ffb4ab",
-            border: "1px solid rgba(255,180,171,0.3)",
+            backgroundColor: "rgba(242,115,90,0.1)", color: "var(--full)",
+            border: "1px solid rgba(242,115,90,0.3)",
           }}>
             🔒 Keycard
           </span>
@@ -157,25 +155,25 @@ function RoomCard({ room }: { room: RoomEntry }) {
         {room.outlets && (
           <span style={{
             fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 6,
-            backgroundColor: "rgba(99,102,241,0.08)", color: "#b9cacb",
-            border: "1px solid rgba(99,102,241,0.18)",
+            backgroundColor: "rgba(214,166,92,0.08)", color: "var(--paper-1)",
+            border: "1px solid rgba(214,166,92,0.18)",
           }}>
-            🔌 Outlets
+            Outlets
           </span>
         )}
       </div>
 
       {/* Hours */}
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span className="material-symbols-outlined" style={{ fontSize: 15, color: "#6B7FA3" }}>schedule</span>
-        <span style={{ fontSize: 13, color: "#b9cacb" }}>{hours}</span>
+        <span className="material-symbols-outlined" style={{ fontSize: 15, color: "var(--paper-2)" }}>schedule</span>
+        <span style={{ fontSize: 13, color: "var(--paper-1)" }}>{hours}</span>
       </div>
 
       {/* Notes */}
       {room.notes && (
         <p style={{
-          margin: 0, fontSize: 12, color: "#6B7FA3", lineHeight: 1.6,
-          fontFamily: "Sora, sans-serif",
+          margin: 0, fontSize: 12, color: "var(--paper-2)", lineHeight: 1.6,
+          fontFamily: "var(--font-sans)",
         }}>
           {room.notes}
         </p>
@@ -191,10 +189,10 @@ function RoomCard({ room }: { room: RoomEntry }) {
             style={{
               display: "inline-flex", alignItems: "center", gap: 5,
               padding: "8px 16px", borderRadius: 9, fontSize: 13, fontWeight: 700,
-              background: "#6366F1", color: "#fff",
+              background: "var(--brass)", color: "var(--ink-0)",
               textDecoration: "none",
               transition: "opacity 150ms ease",
-              fontFamily: "Sora, sans-serif",
+              fontFamily: "var(--font-sans)",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
             onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
@@ -209,23 +207,23 @@ function RoomCard({ room }: { room: RoomEntry }) {
           style={{
             display: "inline-flex", alignItems: "center", gap: 5,
             padding: "8px 16px", borderRadius: 9, fontSize: 13, fontWeight: 600,
-            background: "rgba(30,58,95,0.5)",
-            border: "1px solid rgba(30,58,95,0.7)",
-            color: "#b9cacb",
+            background: "var(--line-strong)",
+            border: "1px solid var(--line-strong)",
+            color: "var(--paper-1)",
             textDecoration: "none",
             transition: "border-color 150ms ease, color 150ms ease",
-            fontFamily: "Sora, sans-serif",
+            fontFamily: "var(--font-sans)",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)";
-            e.currentTarget.style.color = "#e2e2e8";
+            e.currentTarget.style.borderColor = "rgba(214,166,92,0.4)";
+            e.currentTarget.style.color = "var(--paper-0)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "rgba(30,58,95,0.7)";
-            e.currentTarget.style.color = "#b9cacb";
+            e.currentTarget.style.borderColor = "var(--line-strong)";
+            e.currentTarget.style.color = "var(--paper-1)";
           }}
         >
-          📍 Get directions
+          Get directions
         </a>
       </div>
     </div>
@@ -240,32 +238,12 @@ export default function StudyRoomsPage() {
   const rooms = ALL_ROOMS.filter((r) => matchesFilter(r, filter));
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "var(--bg-base)",
-        padding: "48px 24px 96px",
-        maxWidth: 1100,
-        margin: "0 auto",
-      }}
-    >
+    <div className="container-lc" style={{ paddingTop: 56, paddingBottom: "var(--s-16)" }}>
       {/* ── Header ── */}
       <div style={{ marginBottom: 36 }}>
-        <p style={{
-          fontSize: 11, fontWeight: 700, textTransform: "uppercase",
-          letterSpacing: "0.22em", color: "var(--accent)",
-          marginBottom: 12, fontFamily: "Sora, sans-serif",
-        }}>
-          ✦ UWaterloo Campus
-        </p>
-        <h1 style={{
-          margin: "0 0 10px",
-          fontSize: "clamp(1.75rem, 4vw, 2.5rem)",
-          fontWeight: 900, letterSpacing: "-0.03em",
-          color: "var(--text-primary)",
-          fontFamily: "Sora, sans-serif",
-        }}>
-          Group Study Rooms
+        <p className="eyebrow animate-fade-up">University of Waterloo</p>
+        <h1 className="display animate-fade-up" style={{ fontSize: "clamp(2.75rem, 7vw, 5.5rem)", margin: "16px 0 16px", animationDelay: "60ms" }}>
+          Group study rooms
         </h1>
         <p style={{
           margin: 0, fontSize: 15, color: "var(--text-secondary)",
@@ -283,22 +261,14 @@ export default function StudyRoomsPage() {
           return (
             <button
               key={key}
+              type="button"
+              className="chip"
+              aria-pressed={active}
               onClick={() => setFilter(key)}
-              style={{
-                padding: "8px 18px",
-                borderRadius: 9999,
-                fontSize: 13, fontWeight: 600,
-                border: `1px solid ${active ? "rgba(99,102,241,0.6)" : "rgba(30,58,95,0.5)"}`,
-                background: active ? "rgba(99,102,241,0.15)" : "transparent",
-                color: active ? "#818CF8" : "#6B7FA3",
-                cursor: "pointer",
-                transition: "all 150ms ease",
-                fontFamily: "Sora, sans-serif",
-              }}
             >
               {label}
               {key !== "all" && (
-                <span style={{ marginLeft: 6, fontSize: 11, opacity: 0.7 }}>
+                <span style={{ marginLeft: 6, fontSize: 11 }}>
                   ({ALL_ROOMS.filter((r) => matchesFilter(r, key)).length})
                 </span>
               )}
@@ -307,8 +277,8 @@ export default function StudyRoomsPage() {
         })}
         <span style={{
           marginLeft: "auto", alignSelf: "center",
-          fontSize: 12, color: "#6B7FA3",
-          fontFamily: "Sora, sans-serif",
+          fontSize: 12, color: "var(--paper-2)",
+          fontFamily: "var(--font-sans)",
         }}>
           {rooms.length} room{rooms.length !== 1 ? "s" : ""}
         </span>
@@ -318,7 +288,7 @@ export default function StudyRoomsPage() {
       {rooms.length === 0 ? (
         <div style={{
           textAlign: "center", padding: "64px 24px",
-          color: "#6B7FA3", fontFamily: "Sora, sans-serif",
+          color: "var(--paper-2)", fontFamily: "var(--font-sans)",
         }}>
           <p style={{ fontSize: 15 }}>No rooms match this filter.</p>
         </div>

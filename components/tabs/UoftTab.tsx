@@ -55,9 +55,9 @@ function currentHourIndex(): number | null {
 
 function barColor(value: number, isCurrentHour: boolean): string {
   if (isCurrentHour) {
-    return value <= 4 ? "#059669" : value <= 7 ? "#d97706" : "#dc2626";
+    return value <= 4 ? "#6fd3a8" : value <= 7 ? "#f2a93b" : "#f2735a";
   }
-  return value <= 4 ? "#10b981" : value <= 7 ? "#f59e0b" : "#ef4444";
+  return value <= 4 ? "#6fd3a8" : value <= 7 ? "#f2a93b" : "#f2735a";
 }
 
 function hourLabel(index: number): string {
@@ -168,7 +168,7 @@ export default function UoftTab() {
         className="rounded-xl px-4 py-3 text-sm"
         style={{
           backgroundColor: "var(--amber-dim)",
-          border: "1px solid rgba(245,158,11,0.2)",
+          border: "1px solid rgba(242,169,59,0.2)",
           color: "var(--amber)",
         }}
       >

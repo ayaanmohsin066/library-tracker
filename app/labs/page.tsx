@@ -51,7 +51,7 @@ function typicalFill(lab: Lab): number {
 }
 
 function barColor(fill: number): string {
-  return fill > 80 ? "#ffb4ab" : fill > 50 ? "#f59e0b" : "#34D399";
+  return fill > 80 ? "#f2735a" : fill > 50 ? "#f2a93b" : "#6fd3a8";
 }
 
 function detectOs(lab: Lab): { icon: string; label: string } | null {
@@ -81,15 +81,15 @@ const FILTERS: { key: Filter; label: string }[] = [
 
 function BuildingBadge({ building }: { building: "MC" | "DC" }) {
   const style = building === "MC"
-    ? { color: "#818CF8", bg: "rgba(99,102,241,0.12)",  border: "rgba(99,102,241,0.3)"  }
-    : { color: "#34D399", bg: "rgba(52,211,153,0.12)",  border: "rgba(52,211,153,0.3)"  };
+    ? { color: "var(--brass)", bg: "rgba(214,166,92,0.12)",  border: "rgba(214,166,92,0.3)"  }
+    : { color: "var(--paper-1)", bg: "var(--bg-overlay)",  border: "var(--line-strong)"  };   // neutral: green is reserved for occupancy
   return (
     <span style={{
       fontSize: 10, fontWeight: 800, letterSpacing: "0.13em",
       textTransform: "uppercase",
-      padding: "2px 8px", borderRadius: 6,
+      padding: "2px 8px", borderRadius: 4, alignSelf: "flex-start", display: "inline-block",
       background: style.bg, border: `1px solid ${style.border}`, color: style.color,
-      fontFamily: "Sora, sans-serif",
+      fontFamily: "var(--font-sans)",
     }}>
       {building}
     </span>
@@ -104,14 +104,14 @@ function HoursBadge({ hours }: { hours: string }) {
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 5,
       fontSize: 11, fontWeight: 600,
-      padding: "3px 9px", borderRadius: 9999,
-      background: is247 ? "rgba(99,102,241,0.1)"  : "rgba(30,58,95,0.4)",
-      border:     is247 ? "1px solid rgba(99,102,241,0.28)" : "1px solid rgba(30,58,95,0.6)",
-      color:      is247 ? "#818CF8" : "#b9cacb",
-      fontFamily: "Sora, sans-serif",
+      padding: "3px 9px", borderRadius: 4,
+      background: is247 ? "rgba(214,166,92,0.1)"  : "var(--line)",
+      border:     is247 ? "1px solid rgba(214,166,92,0.28)" : "1px solid var(--line-strong)",
+      color:      is247 ? "var(--brass)" : "var(--paper-1)",
+      fontFamily: "var(--font-sans)",
       whiteSpace: "nowrap",
     }}>
-      {is247 && <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6366F1", boxShadow: "0 0 6px rgba(99,102,241,0.8)", display: "inline-block" }} />}
+      {is247 && <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--brass)", boxShadow: "0 0 6px rgba(214,166,92,0.8)", display: "inline-block" }} />}
       {formatHours(hours)}
     </span>
   );
@@ -124,10 +124,10 @@ function AmenityChip({ icon, label, accent }: { icon: string; label: string; acc
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 4,
       padding: "3px 8px", borderRadius: 6, fontSize: 11, fontWeight: 500,
-      background: accent ? "rgba(52,211,153,0.08)"  : "rgba(17,24,39,0.6)",
-      border:     accent ? "1px solid rgba(52,211,153,0.22)" : "1px solid rgba(30,58,95,0.45)",
-      color:      accent ? "#34D399" : "#b9cacb",
-      fontFamily: "Sora, sans-serif",
+      background: accent ? "color-mix(in srgb, var(--quiet) 10%, transparent)" : "var(--bg-overlay)",
+      border:     accent ? "1px solid rgba(111,211,168,0.22)" : "1px solid var(--line)",
+      color:      accent ? "var(--quiet)" : "var(--paper-1)",
+      fontFamily: "var(--font-sans)",
       whiteSpace: "nowrap",
     }}>
       <span className="material-symbols-outlined" style={{ fontSize: 13, lineHeight: 1 }}>{icon}</span>
@@ -152,11 +152,11 @@ function LabCard({ lab, mounted }: { lab: Lab; mounted: boolean }) {
           <BuildingBadge building={lab.building} />
           <h3 style={{
             margin: "4px 0 0", fontSize: "1.1rem", fontWeight: 800, letterSpacing: "-0.025em",
-            color: "#e2e2e8", fontFamily: "Sora, sans-serif", lineHeight: 1.2,
+            color: "var(--paper-0)", fontFamily: "var(--font-sans)", lineHeight: 1.2,
           }}>
             {lab.room}
           </h3>
-          <p style={{ margin: 0, fontSize: 12, color: "#6B7FA3", lineHeight: 1.3 }}>
+          <p style={{ margin: 0, fontSize: 12, color: "var(--paper-2)", lineHeight: 1.3 }}>
             {lab.name}
           </p>
         </div>
@@ -166,11 +166,11 @@ function LabCard({ lab, mounted }: { lab: Lab; mounted: boolean }) {
       {/* ── Animated seat bar ─── */}
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-          <span style={{ fontSize: 11, color: "#6B7FA3", fontFamily: "Sora, sans-serif" }}>
+          <span style={{ fontSize: 11, color: "var(--paper-2)", fontFamily: "var(--font-sans)" }}>
             Typical occupancy
           </span>
           <span style={{
-            fontSize: 12, fontWeight: 700, color: "#b9cacb",
+            fontSize: 12, fontWeight: 700, color: "var(--paper-1)",
             fontFamily: "var(--font-geist-mono), monospace",
           }}>
             {lab.seats} seats
@@ -178,7 +178,7 @@ function LabCard({ lab, mounted }: { lab: Lab; mounted: boolean }) {
         </div>
         <div style={{
           height: 7, borderRadius: 9999, overflow: "hidden",
-          background: "rgba(30,58,95,0.45)",
+          background: "var(--line)",
         }}>
           <div style={{
             height: "100%", borderRadius: 9999,
@@ -206,10 +206,10 @@ function LabCard({ lab, mounted }: { lab: Lab; mounted: boolean }) {
 
       {/* ── Access row ─── */}
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        <span className="material-symbols-outlined" style={{ fontSize: 14, color: "#6B7FA3", flexShrink: 0 }}>
+        <span className="material-symbols-outlined" style={{ fontSize: 14, color: "var(--paper-2)", flexShrink: 0 }}>
           lock
         </span>
-        <span style={{ fontSize: 12, color: "#6B7FA3", fontFamily: "Sora, sans-serif" }}>
+        <span style={{ fontSize: 12, color: "var(--paper-2)", fontFamily: "var(--font-sans)" }}>
           {lab.access}
         </span>
       </div>
@@ -217,8 +217,8 @@ function LabCard({ lab, mounted }: { lab: Lab; mounted: boolean }) {
       {/* ── Notes ─── */}
       {lab.notes && (
         <p style={{
-          margin: 0, fontSize: 12, color: "#6B7FA3", fontStyle: "italic",
-          lineHeight: 1.5, fontFamily: "Sora, sans-serif",
+          margin: 0, fontSize: 12, color: "var(--paper-2)", fontStyle: "italic",
+          lineHeight: 1.5, fontFamily: "var(--font-sans)",
         }}>
           {lab.notes}
         </p>
@@ -247,13 +247,13 @@ function LabsSidebar() {
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18 }}>
           <div style={{
             width: 8, height: 8, borderRadius: "50%",
-            background: "#6366F1",
-            boxShadow: "0 0 8px rgba(99,102,241,0.8)",
+            background: "var(--brass)",
+            boxShadow: "0 0 8px rgba(214,166,92,0.8)",
           }} />
           <span style={{
             fontSize: 10, fontWeight: 800, textTransform: "uppercase",
-            letterSpacing: "0.16em", color: "#6B7FA3",
-            fontFamily: "Sora, sans-serif",
+            letterSpacing: "0.16em", color: "var(--paper-2)",
+            fontFamily: "var(--font-sans)",
           }}>
             Quick Stats
           </span>
@@ -263,15 +263,15 @@ function LabsSidebar() {
           {stats.map(({ icon, label, value }) => (
             <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span className="material-symbols-outlined" style={{ fontSize: 16, color: "#6B7FA3" }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 16, color: "var(--paper-2)" }}>
                   {icon}
                 </span>
-                <span style={{ fontSize: 13, color: "#b9cacb", fontFamily: "Sora, sans-serif" }}>
+                <span style={{ fontSize: 13, color: "var(--paper-1)", fontFamily: "var(--font-sans)" }}>
                   {label}
                 </span>
               </div>
               <span style={{
-                fontSize: 15, fontWeight: 800, color: "#818CF8",
+                fontSize: 15, fontWeight: 800, color: "var(--brass)",
                 fontFamily: "var(--font-geist-mono), monospace",
                 letterSpacing: "-0.02em",
               }}>
@@ -283,12 +283,12 @@ function LabsSidebar() {
 
         <div style={{
           marginTop: 18, paddingTop: 16,
-          borderTop: "1px solid rgba(30,58,95,0.4)",
-          fontSize: 12, color: "#6B7FA3", lineHeight: 1.55,
-          fontFamily: "Sora, sans-serif",
+          borderTop: "1px solid var(--line)",
+          fontSize: 12, color: "var(--paper-2)", lineHeight: 1.55,
+          fontFamily: "var(--font-sans)",
           fontStyle: "italic",
         }}>
-          <span style={{ color: "#34D399", fontWeight: 600, fontStyle: "normal" }}>Tip:</span>{" "}
+          <span style={{ color: "var(--paper-0)", fontWeight: 600, fontStyle: "normal" }}>Tip:</span>{" "}
           Laptop-friendly labs have outlets at every seat. 24/7 labs require keycard after 6 pm.
         </div>
       </div>
@@ -299,26 +299,26 @@ function LabsSidebar() {
           className="glass-panel rounded-2xl"
           style={{
             padding: 22, cursor: "pointer",
-            border: "1px solid rgba(99,102,241,0.2)",
+            border: "1px solid rgba(214,166,92,0.2)",
             transition: "border-color 200ms ease, box-shadow 200ms ease",
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(99,102,241,0.45)";
-            (e.currentTarget as HTMLDivElement).style.boxShadow  = "0 0 32px rgba(99,102,241,0.1)";
+            (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(214,166,92,0.45)";
+            (e.currentTarget as HTMLDivElement).style.boxShadow  = "0 0 32px rgba(214,166,92,0.1)";
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(99,102,241,0.2)";
+            (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(214,166,92,0.2)";
             (e.currentTarget as HTMLDivElement).style.boxShadow  = "none";
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
             <span style={{
-              fontSize: 13, fontWeight: 700, color: "#818CF8",
-              fontFamily: "Sora, sans-serif",
+              fontSize: 13, fontWeight: 700, color: "var(--brass)",
+              fontFamily: "var(--font-sans)",
             }}>
               Campus Map
             </span>
-            <span className="material-symbols-outlined" style={{ fontSize: 18, color: "#818CF8" }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 18, color: "var(--brass)" }}>
               arrow_forward
             </span>
           </div>
@@ -326,8 +326,8 @@ function LabsSidebar() {
           {/* Map preview area */}
           <div style={{
             height: 96, borderRadius: 12, marginBottom: 12,
-            background: "linear-gradient(135deg, rgba(10,15,28,0.9) 0%, rgba(13,20,36,0.85) 100%)",
-            border: "1px solid rgba(30,58,95,0.5)",
+            background: "linear-gradient(135deg, var(--ink-1) 0%, var(--ink-1) 100%)",
+            border: "1px solid var(--line-strong)",
             display: "flex", alignItems: "center", justifyContent: "center",
             position: "relative", overflow: "hidden",
           }}>
@@ -335,7 +335,7 @@ function LabsSidebar() {
             <svg width="100%" height="100%" style={{ position: "absolute", inset: 0, opacity: 0.3 }}>
               {Array.from({ length: 6 }, (_, row) =>
                 Array.from({ length: 12 }, (_, col) => (
-                  <circle key={`${row}-${col}`} cx={col * 22 + 8} cy={row * 18 + 8} r={1.5} fill="#6366F1" />
+                  <circle key={`${row}-${col}`} cx={col * 22 + 8} cy={row * 18 + 8} r={1.5} fill="var(--brass)" />
                 ))
               )}
             </svg>
@@ -347,22 +347,22 @@ function LabsSidebar() {
               <div key={label} style={{ position: "absolute", left: x, top: y, transform: "translate(-50%,-50%)" }}>
                 <div style={{
                   width: 10, height: 10, borderRadius: "50%",
-                  background: "#6366F1",
-                  boxShadow: "0 0 10px rgba(99,102,241,0.9)",
+                  background: "var(--brass)",
+                  boxShadow: "0 0 10px rgba(214,166,92,0.9)",
                 }} />
                 <span style={{
                   position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)",
-                  marginTop: 3, fontSize: 9, fontWeight: 700, color: "#818CF8",
-                  fontFamily: "Sora, sans-serif", whiteSpace: "nowrap",
+                  marginTop: 3, fontSize: 9, fontWeight: 700, color: "var(--brass)",
+                  fontFamily: "var(--font-sans)", whiteSpace: "nowrap",
                 }}>{label}</span>
               </div>
             ))}
-            <span className="material-symbols-outlined" style={{ fontSize: 32, color: "rgba(30,58,95,0.8)", position: "relative", zIndex: 1 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 32, color: "var(--line-strong)", position: "relative", zIndex: 1 }}>
               map
             </span>
           </div>
 
-          <p style={{ margin: 0, fontSize: 12, color: "#6B7FA3", fontFamily: "Sora, sans-serif", lineHeight: 1.5 }}>
+          <p style={{ margin: 0, fontSize: 12, color: "var(--paper-2)", fontFamily: "var(--font-sans)", lineHeight: 1.5 }}>
             View all buildings and study spaces in the interactive campus map →
           </p>
         </div>
@@ -377,20 +377,7 @@ function FilterChip({
   label, active, onClick,
 }: { label: string; active: boolean; onClick: () => void }) {
   return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "inline-flex", alignItems: "center",
-        padding: "7px 16px", borderRadius: 9999, fontSize: 13, fontWeight: 600,
-        background: active ? "#6366F1"                        : "rgba(13,20,36,0.75)",
-        color:      active ? "#0A0F1C"                        : "#b9cacb",
-        border:     active ? "1px solid transparent"          : "1px solid rgba(30,58,95,0.5)",
-        boxShadow:  active ? "0 0 18px rgba(99,102,241,0.35)" : "none",
-        cursor: "pointer",
-        fontFamily: "Sora, sans-serif",
-        transition: "background 160ms ease, color 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
-      }}
-    >
+    <button type="button" className="chip" aria-pressed={active} onClick={onClick}>
       {label}
     </button>
   );
@@ -416,33 +403,19 @@ export default function LabsPage() {
   });
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-base)" }}>
-      <div style={{ padding: "0 24px 48px", maxWidth: 1400, margin: "0 auto" }}>
+    <div>
+      <div className="container-lc" style={{ paddingBottom: "var(--s-16)" }}>
 
         {/* ── Page header ────────────────────────────────────────────── */}
         <div style={{
-          padding: "28px 0 24px",
-          borderBottom: "1px solid rgba(30,58,95,0.4)",
-          marginBottom: 24,
+          padding: "56px 0 32px",
+          borderBottom: "1px solid var(--line-strong)",
+          marginBottom: 32,
         }}>
-          <h1 style={{
-            margin: "0 0 4px",
-            fontSize: "clamp(1.6rem, 4vw, 2.4rem)",
-            fontWeight: 900,
-            letterSpacing: "-0.03em",
-            color: "#e2e2e8",
-            fontFamily: "Sora, sans-serif",
-            lineHeight: 1.1,
-          }}>
-            Computer Labs
+          <p className="eyebrow animate-fade-up">University of Waterloo · CSCF-managed labs</p>
+          <h1 className="display animate-fade-up" style={{ fontSize: "clamp(2.75rem, 7vw, 5.5rem)", margin: "16px 0 24px", animationDelay: "60ms" }}>
+            Computer labs
           </h1>
-          <p style={{
-            margin: "0 0 20px",
-            fontSize: 14, color: "#6B7FA3",
-            fontFamily: "Sora, sans-serif",
-          }}>
-            University of Waterloo · CSCF-managed labs
-          </p>
 
           {/* Filter chips */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -472,11 +445,11 @@ export default function LabsPage() {
               <div style={{
                 display: "flex", alignItems: "center", justifyContent: "center",
                 minHeight: 200,
-                background: "rgba(13,20,36,0.5)",
-                border: "1px solid rgba(30,58,95,0.4)",
+                background: "var(--ink-1)",
+                border: "1px solid var(--line)",
                 borderRadius: 16,
               }}>
-                <p style={{ fontSize: 14, color: "#6B7FA3", fontFamily: "Sora, sans-serif" }}>
+                <p style={{ fontSize: 14, color: "var(--paper-2)", fontFamily: "var(--font-sans)" }}>
                   No labs match this filter.
                 </p>
               </div>
@@ -490,14 +463,14 @@ export default function LabsPage() {
         </div>
 
         {/* ── Footer ──────────────────────────────────────────────── */}
-        <div style={{ marginTop: 48, paddingTop: 20, borderTop: "1px solid rgba(30,58,95,0.35)" }}>
-          <p style={{ fontSize: 12, color: "#6B7FA3", fontFamily: "Sora, sans-serif" }}>
+        <div style={{ marginTop: 48, paddingTop: 20, borderTop: "1px solid var(--line)" }}>
+          <p style={{ fontSize: 12, color: "var(--paper-2)", fontFamily: "var(--font-sans)" }}>
             Lab data via CSCF · Not real-time · Hours subject to change ·{" "}
             <a
               href="https://cs.uwaterloo.ca/about/resources/computing-facilities"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: "#818CF8", textDecoration: "none" }}
+              style={{ color: "var(--paper-0)", textDecoration: "underline", textUnderlineOffset: 3 }}
             >
               Official CSCF page →
             </a>

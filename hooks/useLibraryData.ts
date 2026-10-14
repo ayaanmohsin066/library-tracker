@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { WaitzLocation } from "@/app/api/live/route";
 
-type Uni = "waterloo" | "regina";
+export type Uni = "waterloo" | "regina";
 
 interface LibraryApiResponse {
   live: WaitzLocation[];
@@ -52,13 +52,13 @@ export default function useLibraryData(uni: Uni) {
           ? (apiJson.live as WaitzLocation[])
           : [];
 
-        console.log(`[useLibraryData] ${uni} live.length=${live.length}`, live[0] ?? "(empty)");
-
-        // Fire-and-forget snapshot
+        // Fire-and-forget snapshot for the history/best-time features.
+        // subLocs is normalised to an array by /api/live, but guard anyway:
+        // Waitz sends `false` for libraries without floor sensors.
         try {
           const snapshots = live.flatMap((loc) => [
             { library_name: loc.name, floor_name: null, percent_full: Math.round(loc.percentage * 100) },
-            ...(loc.subLocs ?? []).map((sub) => ({
+            ...(Array.isArray(loc.subLocs) ? loc.subLocs : []).map((sub) => ({
               library_name: loc.name,
               floor_name:   sub.name,
               percent_full: Math.round(sub.percentage * 100),

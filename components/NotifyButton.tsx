@@ -243,7 +243,7 @@ export default function NotifyButton({ libraryName, currentPct, uni }: NotifyBut
         /* ── Confirmation ── */
         <div>
           <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.55, marginBottom: 12 }}>
-            <span style={{ color: "#10b981", marginRight: 6 }}>✓</span>
+            <span style={{ color: "#6fd3a8", marginRight: 6 }}>✓</span>
             We&apos;ll email you when{" "}
             <strong style={{ color: "var(--text-primary)" }}>{libraryName}</strong>{" "}
             drops below{" "}
@@ -296,7 +296,7 @@ export default function NotifyButton({ libraryName, currentPct, uni }: NotifyBut
           </div>
 
           {errMsg && (
-            <p style={{ fontSize: 12, color: "#ef4444", margin: 0 }}>{errMsg}</p>
+            <p style={{ fontSize: 12, color: "#f2735a", margin: 0 }}>{errMsg}</p>
           )}
 
           <button

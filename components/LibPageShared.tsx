@@ -2,101 +2,66 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Reveal from "@/components/ui/Reveal";
+import { colorFor, LEVEL_COLOR, LEVEL_LABEL, levelFor, toPct } from "@/lib/occupancy";
 
-// ── Color helper ────────────────────────────────────────────────────
+// Kept for any external callers; delegates to the shared classification.
 export function occupancyColor(pct: number): string {
-  return pct > 80 ? "#EF4444" : pct > 50 ? "#F59E0B" : "#34D399";
+  return colorFor(pct);
 }
 
 // ── Occupancy Ticker ────────────────────────────────────────────────
 export type TickerLib = { name: string; percentage: number; isOpen: boolean };
 
+/**
+ * A slow marquee of every library on this campus. Duplicated once so the
+ * loop is seamless; the copy is aria-hidden. Pauses on hover so it can be
+ * read, and is static under reduced motion (global CSS).
+ */
 export function OccupancyTicker({ libs }: { libs: TickerLib[] }) {
   if (!libs.length) return null;
-  const duration = Math.max(20, libs.length * 8);
-  const doubled = [...libs, ...libs];
-
+  const duration = Math.max(24, libs.length * 9);
+  const item = (lib: TickerLib, i: number, hidden: boolean) => {
+    const pct = toPct(lib.percentage);
+    const lvl = levelFor(pct, lib.isOpen);
+    return (
+      <span key={`${hidden ? "b" : "a"}${i}`} className="ticker-item" aria-hidden={hidden || undefined}>
+        <span className="ticker-dot" style={{ background: LEVEL_COLOR[lvl] }} />
+        <span>{lib.name}</span>
+        <span style={{ color: LEVEL_COLOR[lvl] }}>{lib.isOpen ? `${pct}%` : "Closed"}</span>
+      </span>
+    );
+  };
   return (
-    <div style={{
-      overflow: "hidden",
-      borderBottom: "1px solid rgba(30,58,95,0.45)",
-      background: "rgba(10,15,28,0.9)",
-      backdropFilter: "blur(8px)",
-      WebkitBackdropFilter: "blur(8px)",
-    }}>
-      <style>{`
-        @keyframes lc-ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-      `}</style>
-      <div style={{
-        display: "flex",
-        width: "max-content",
-        animation: `lc-ticker ${duration}s linear infinite`,
-        padding: "9px 0",
-        alignItems: "center",
-      }}>
-        {doubled.map((lib, i) => {
-          const pct   = Math.round(lib.percentage * 100);
-          const color = lib.isOpen ? occupancyColor(pct) : "#6B7FA3";
-          return (
-            <span key={i} style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "0 22px",
-              fontSize: 12, fontWeight: 600,
-              fontFamily: "Sora, sans-serif",
-              whiteSpace: "nowrap",
-            }}>
-              <span style={{
-                width: 6, height: 6, borderRadius: "50%",
-                background: color,
-                display: "inline-block", flexShrink: 0,
-                boxShadow: lib.isOpen ? `0 0 6px ${color}80` : "none",
-              }} />
-              <span style={{ color: "#b9cacb" }}>{lib.name}</span>
-              <span style={{ color }}>{pct}% full</span>
-              <span style={{ color: "rgba(107,127,163,0.35)" }}>·</span>
-            </span>
-          );
-        })}
+    <div className="ticker" role="region" aria-label="All libraries at a glance">
+      <div className="ticker-track" style={{ animationDuration: `${duration}s` }}>
+        {libs.map((l, i) => item(l, i, false))}
+        {libs.map((l, i) => item(l, i, true))}
       </div>
     </div>
   );
 }
 
-// ── Refresh button (spins on click, springs on hover) ───────────────
+// ── Refresh button ──────────────────────────────────────────────────
 function RefreshButton({ onClick }: { onClick: () => void }) {
   const [spinning, setSpinning] = useState(false);
   return (
     <button
-      className="focus-pop"
+      type="button"
+      className="btn btn-ghost btn-sm"
       onClick={() => {
         onClick();
         setSpinning(true);
-        setTimeout(() => setSpinning(false), 500);
+        setTimeout(() => setSpinning(false), 600);
       }}
-      style={{
-        display: "inline-flex", alignItems: "center", gap: 6,
-        padding: "7px 14px", borderRadius: 9, fontSize: 12, fontWeight: 600,
-        background: "rgba(99,102,241,0.1)",
-        border: "1px solid rgba(99,102,241,0.28)",
-        color: "#818CF8",
-        cursor: "pointer",
-        fontFamily: "Sora, sans-serif",
-        transition: "transform 200ms var(--ease-spring), background 150ms ease",
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px) scale(1.04)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0) scale(1)"; }}
     >
-      <span
-        className="material-symbols-outlined"
-        style={{
-          fontSize: 14,
-          display: "inline-block",
-          transform: spinning ? "rotate(360deg)" : "rotate(0deg)",
-          transition: spinning ? "transform 500ms var(--ease-spring)" : "none",
-        }}
+      <svg
+        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+        strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+        style={{ transform: spinning ? "rotate(360deg)" : "none", transition: spinning ? "transform 600ms var(--ease-out)" : "none" }}
       >
-        refresh
-      </span>
+        <path d="M21 12a9 9 0 1 1-3-6.7L21 8" /><path d="M21 3v5h-5" />
+      </svg>
       Refresh
     </button>
   );
@@ -108,125 +73,49 @@ export function LivePageHeader({
   dataUpdatedAt,
   refetch,
   showMapLink,
+  eyebrow = "Live occupancy",
+  description,
 }: {
   title: string;
   dataUpdatedAt: string | null;
   refetch: () => void;
   showMapLink?: boolean;
+  eyebrow?: string;
+  description?: string;
 }) {
   return (
-    <div style={{
-      display: "flex",
-      flexWrap: "wrap",
-      alignItems: "center",
-      gap: 12,
-      padding: "28px 0 20px",
-      borderBottom: "1px solid rgba(30,58,95,0.4)",
-      marginBottom: 24,
-    }}>
-      {/* Left: title + live dot */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
-        <h1 style={{
-          margin: 0,
-          fontSize: "clamp(1.5rem, 4vw, 2.25rem)",
-          fontWeight: 900,
-          letterSpacing: "-0.03em",
-          color: "#e2e2e8",
-          fontFamily: "Sora, sans-serif",
-          lineHeight: 1.1,
-        }}>
+    <header className="campus-head">
+      <div style={{ minWidth: 0 }}>
+        <p className="eyebrow animate-fade-up" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span className="live-dot" aria-hidden="true" />
+          {eyebrow}
+        </p>
+        <h1 className="display text-balance animate-fade-up" style={{ fontSize: "clamp(2.75rem, 7vw, 5.5rem)", margin: "16px 0 0", animationDelay: "60ms" }}>
           {title}
         </h1>
-        <div style={{ position: "relative", width: 14, height: 14, flexShrink: 0 }}>
-          <div style={{
-            position: "absolute", inset: 2, borderRadius: "50%",
-            background: "#34D399",
-            boxShadow: "0 0 10px rgba(52,211,153,0.75)",
-          }} />
-          <div className="animate-live-ring" style={{
-            position: "absolute", inset: 0, borderRadius: "50%",
-            border: "1.5px solid rgba(52,211,153,0.65)",
-          }} />
-        </div>
+        {description && (
+          <p className="animate-fade-up" style={{ margin: "16px 0 0", color: "var(--paper-1)", maxWidth: "54ch", animationDelay: "120ms" }}>
+            {description}
+          </p>
+        )}
       </div>
 
-      {/* Right: timestamp + buttons */}
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+      <div className="campus-head-actions animate-fade-up" style={{ animationDelay: "160ms" }}>
         {dataUpdatedAt && (
-          <span style={{
-            fontSize: 11, color: "#6B7FA3",
-            fontFamily: "var(--font-geist-mono), monospace",
-          }}>
-            {dataUpdatedAt}
-          </span>
+          <span className="eyebrow tabular" aria-live="polite">{dataUpdatedAt}</span>
         )}
         <RefreshButton onClick={refetch} />
         {showMapLink && (
-          <Link
-            href="/map"
-            className="focus-pop"
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "7px 14px", borderRadius: 9, fontSize: 12, fontWeight: 600,
-              background: "rgba(52,211,153,0.08)",
-              border: "1px solid rgba(52,211,153,0.22)",
-              color: "#34D399",
-              textDecoration: "none",
-              fontFamily: "Sora, sans-serif",
-              transition: "transform 200ms var(--ease-spring), background 150ms ease",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px) scale(1.04)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0) scale(1)"; }}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>map</span>
-            Campus Map →
+          <Link href="/map" className="btn btn-ghost btn-sm">
+            Campus map <span className="btn-arrow" aria-hidden="true">→</span>
           </Link>
         )}
       </div>
-    </div>
+    </header>
   );
 }
 
-// ── Stat Chip ───────────────────────────────────────────────────────
-function StatChip({ label, value, accent }: { label: string; value: string; accent?: string }) {
-  const [hov, setHov] = useState(false);
-  return (
-    <div
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        display: "flex", flexDirection: "column", gap: 5,
-        background: "rgba(13,20,36,0.78)",
-        border: `1px solid ${hov ? "rgba(99,102,241,0.38)" : "rgba(30,58,95,0.5)"}`,
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        borderRadius: 14,
-        padding: "12px 18px",
-        minWidth: 120,
-        boxShadow: hov ? "0 0 28px rgba(99,102,241,0.13)" : "none",
-        transform: hov ? "translateY(-3px)" : "translateY(0)",
-        transition: "border-color 180ms ease, box-shadow 180ms ease, transform 220ms var(--ease-spring)",
-        cursor: "default",
-      }}
-    >
-      <span style={{
-        fontSize: 10, fontWeight: 700, textTransform: "uppercase",
-        letterSpacing: "0.14em", color: "#6B7FA3",
-      }}>
-        {label}
-      </span>
-      <span style={{
-        fontSize: 14, fontWeight: 700,
-        color: accent ?? "#818CF8",
-        fontFamily: "var(--font-geist-mono), monospace",
-      }}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
-// ── Stat Chips Row ──────────────────────────────────────────────────
+// ── Stat strip ──────────────────────────────────────────────────────
 export function StatChipsRow({
   total, openNow, quietest, busiest,
 }: {
@@ -235,45 +124,32 @@ export function StatChipsRow({
   quietest: { name: string; pct: number } | null;
   busiest:  { name: string; pct: number } | null;
 }) {
+  const short = (n: string) => n.replace(/ Library$/i, "");
+  const cells: { label: string; value: React.ReactNode }[] = [
+    { label: "Libraries", value: total },
+    { label: "Open now", value: openNow },
+    {
+      label: "Quietest",
+      value: quietest
+        ? <><span className="stat-name">{short(quietest.name)}</span><span style={{ color: colorFor(quietest.pct) }}>{quietest.pct}%</span></>
+        : "—",
+    },
+    {
+      label: "Busiest",
+      value: busiest
+        ? <><span className="stat-name">{short(busiest.name)}</span><span style={{ color: colorFor(busiest.pct) }}>{busiest.pct}%</span></>
+        : "—",
+    },
+  ];
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 28 }}>
-      <StatChip label="Total Libraries" value={String(total)} />
-      <StatChip label="Open Now"        value={String(openNow)} accent="#34D399" />
-      <StatChip
-        label="Quietest"
-        value={quietest ? `${quietest.name.split(" ")[0]} · ${quietest.pct}%` : "—"}
-        accent="#34D399"
-      />
-      <StatChip
-        label="Busiest"
-        value={busiest ? `${busiest.name.split(" ")[0]} · ${busiest.pct}%` : "—"}
-        accent={busiest ? (busiest.pct > 80 ? "#EF4444" : "#818CF8") : undefined}
-      />
-    </div>
-  );
-}
-
-// ── Progress Ring ───────────────────────────────────────────────────
-function ProgressRing({ pct, isOpen }: { pct: number; isOpen: boolean }) {
-  const circumference = 251.2;
-  const offset = circumference - (circumference * pct) / 100;
-  const stroke = !isOpen
-    ? "#1E3A5F"
-    : pct > 80 ? "#EF4444"
-    : pct > 50 ? "#F59E0B"
-    : "#34D399";
-
-  return (
-    <svg viewBox="0 0 100 100" width="128" height="128" aria-hidden="true">
-      <circle cx="50" cy="50" r="40" fill="transparent" strokeWidth="8" stroke="#1E2A3A" />
-      <circle
-        cx="50" cy="50" r="40" fill="transparent"
-        strokeWidth="8" strokeLinecap="round"
-        strokeDasharray="251.2" strokeDashoffset={offset}
-        className="progress-ring-circle"
-        style={{ stroke, transition: "stroke-dashoffset 0.8s var(--ease-spring), stroke 0.4s ease" }}
-      />
-    </svg>
+    <dl className="stat-strip">
+      {cells.map((c, i) => (
+        <Reveal key={c.label} delay={i * 60} className="stat-cell">
+          <dt className="eyebrow">{c.label}</dt>
+          <dd className="tabular">{c.value}</dd>
+        </Reveal>
+      ))}
+    </dl>
   );
 }
 
@@ -288,6 +164,7 @@ export interface LibProps {
   subLocs: { name: string; percentage: number; people: number; capacity: number; isOpen: boolean }[];
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  /** position in the grid, used to stagger the entrance */
   index?: number;
 }
 
@@ -296,309 +173,135 @@ export function LibraryCard({
   isFavorite = false, onToggleFavorite, index = 0,
 }: LibProps) {
   const [floorsOpen, setFloorsOpen] = useState(true);
-  const [hov, setHov] = useState(false);
-  const [justFaved, setJustFaved] = useState(false);
-  const pct          = Math.round(percentage * 100);
-  const color        = occupancyColor(pct);
-  const displayColor = isOpen ? color : "#6B7FA3";
-  const ringStroke   = !isOpen ? "#1E3A5F" : pct > 80 ? "#EF4444" : pct > 50 ? "#F59E0B" : "#34D399";
+  const [justSaved, setJustSaved] = useState(false);
+  const pct   = toPct(percentage);
+  const level = levelFor(pct, isOpen);
+  const color = LEVEL_COLOR[level];
+  const floors = Array.isArray(subLocs) ? subLocs : [];
+  const floorsId = `floors-${name.replace(/\W+/g, "-").toLowerCase()}`;
 
   return (
-    <div
-      className="glass-panel glass-highlight rounded-2xl animate-pop-in"
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        opacity: isOpen ? 1 : 0.5,
-        padding: 24,
-        display: "flex",
-        flexDirection: "column",
-        transform: hov ? "translateY(-4px) scale(1.012)" : "translateY(0) scale(1)",
-        boxShadow: hov ? "0 20px 48px rgba(0,0,0,0.4)" : "none",
-        transition: "transform 320ms var(--ease-spring), box-shadow 280ms ease, opacity 300ms ease",
-        animationDelay: `${Math.min(index, 8) * 70}ms`,
-      }}
-    >
-      {/* ── Header row ─── */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 20 }}>
-        <h3 style={{
-          margin: 0, fontSize: "0.9rem", fontWeight: 700, lineHeight: 1.3,
-          color: "#e2e2e8", fontFamily: "Sora, sans-serif", flex: 1,
-        }}>
-          {name}
-        </h3>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          <span style={{
-            display: "inline-flex", alignItems: "center", gap: 5,
-            padding: "3px 10px", borderRadius: 9999, fontSize: 11, fontWeight: 700,
-            background: isOpen ? "rgba(52,211,153,0.12)" : "rgba(255,180,171,0.1)",
-            border: `1px solid ${isOpen ? "rgba(52,211,153,0.3)" : "rgba(255,180,171,0.25)"}`,
-            color: isOpen ? "#34D399" : "#ffb4ab",
-          }}>
-            <span style={{
-              width: 5, height: 5, borderRadius: "50%",
-              background: isOpen ? "#34D399" : "#ffb4ab",
-              boxShadow: isOpen ? "0 0 5px rgba(52,211,153,0.8)" : "none",
-            }} />
-            {isOpen ? "Open" : "Closed"}
-          </span>
-          <span className="material-symbols-outlined" style={{ color: "#6B7FA3", fontSize: 18 }}>
-            sensors
-          </span>
-          {onToggleFavorite && (
-            <button
-              className="focus-pop"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleFavorite();
-                if (!isFavorite) {
-                  setJustFaved(true);
-                  setTimeout(() => setJustFaved(false), 420);
-                }
-              }}
-              aria-label={isFavorite ? "Remove from saved" : "Save library"}
-              style={{
-                background: "none", border: "none", cursor: "pointer",
-                padding: 2, display: "flex", alignItems: "center",
-                color: isFavorite ? "#6366F1" : "#6B7FA3",
-                transform: justFaved ? "scale(1.35) rotate(-12deg)" : "scale(1) rotate(0deg)",
-                transition: justFaved
-                  ? "transform 380ms var(--ease-spring)"
-                  : "color 150ms ease, transform 200ms var(--ease-spring)",
-              }}
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{
-                  fontSize: 18,
-                  fontVariationSettings: isFavorite ? "'FILL' 1" : "'FILL' 0",
-                }}
-              >
-                {isFavorite ? "bookmark" : "bookmark_add"}
-              </span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* ── Ring + percentage centered ─── */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 18 }}>
-        <div style={{ position: "relative", width: 128, height: 128 }}>
-          <ProgressRing pct={pct} isOpen={isOpen} />
-          <div style={{
-            position: "absolute", inset: 0,
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          }}>
-            <span style={{
-              fontSize: "1.5rem", fontWeight: 900, lineHeight: 1,
-              color: displayColor,
-              fontFamily: "var(--font-geist-mono), monospace",
-            }}>
-              {pct}%
-            </span>
-            <span style={{ fontSize: 10, color: "#6B7FA3", marginTop: 3 }}>occupied</span>
-          </div>
-        </div>
-        <p style={{
-          margin: 0, fontSize: 12, color: "#b9cacb",
-          fontFamily: "var(--font-geist-mono), monospace",
-        }}>
-          {people.toLocaleString()} / {capacity.toLocaleString()} seats
-        </p>
-      </div>
-
-      {/* ── Glowing occupancy bar ─── */}
-      <div style={{
-        height: 6, borderRadius: 9999,
-        background: "rgba(30,58,95,0.5)",
-        marginBottom: 12, overflow: "hidden",
-      }}>
-        <div style={{
-          height: "100%", borderRadius: 9999,
-          width: `${pct}%`,
-          background: isOpen
-            ? `linear-gradient(90deg, ${ringStroke}99, ${ringStroke})`
-            : "#1E3A5F",
-          boxShadow: isOpen ? `0 0 12px ${ringStroke}60` : "none",
-          transition: "width 0.7s cubic-bezier(0.4,0,0.2,1)",
-        }} />
-      </div>
-
-      {/* ── Hour summary ─── */}
-      <p style={{
-        margin: "0 0 16px", fontSize: 11, color: "#6B7FA3",
-        fontFamily: "Sora, sans-serif", letterSpacing: "0.01em",
-      }}>
-        {hourSummary}
-      </p>
-
-      {/* ── Floor breakdown (collapsible) ─── */}
-      {subLocs.length > 0 && (
-        <div style={{ borderTop: "1px solid rgba(30,58,95,0.4)", paddingTop: 14 }}>
+    <Reveal delay={Math.min(index, 8) * 70} as="article" className="lib-card" style={{ ["--lvl" as string]: color }}>
+      <header className="lib-card-head">
+        <h3 className="lib-card-name">{name}</h3>
+        <span className="status-pill" style={{ color }}>
+          <span className="status-dot" style={{ background: color }} aria-hidden="true" />
+          {LEVEL_LABEL[level]}
+        </span>
+        {onToggleFavorite && (
           <button
-            onClick={() => setFloorsOpen((v) => !v)}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              width: "100%", background: "none", border: "none", cursor: "pointer",
-              padding: 0, marginBottom: floorsOpen ? 12 : 0,
+            type="button"
+            className="icon-btn"
+            data-pop={justSaved ? "true" : "false"}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite();
+              if (!isFavorite) { setJustSaved(true); setTimeout(() => setJustSaved(false), 400); }
             }}
+            aria-pressed={isFavorite}
+            aria-label={isFavorite ? `Remove ${name} from saved` : `Save ${name}`}
           >
-            <span style={{
-              fontSize: 10, fontWeight: 700, textTransform: "uppercase",
-              letterSpacing: "0.15em", color: "#6B7FA3",
-            }}>
-              By Floor
-            </span>
-            <span style={{
-              fontSize: 10, color: "#6B7FA3",
-              display: "inline-block",
-              transform: floorsOpen ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "transform 280ms var(--ease-spring)",
-            }}>
-              ▾
-            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"
+              fill={isFavorite ? "var(--brass)" : "none"} stroke={isFavorite ? "var(--brass)" : "currentColor"} strokeWidth="1.8" strokeLinejoin="round">
+              <path d="M6 3h12v18l-6-4-6 4z" />
+            </svg>
+          </button>
+        )}
+      </header>
+
+      <div className="lib-card-figure">
+        {isOpen ? (
+          <span className="display tabular lib-card-pct">
+            {pct}<span className="lib-card-pct-unit">%</span>
+          </span>
+        ) : (
+          <span className="display lib-card-pct" style={{ fontSize: 40, color: "var(--paper-2)" }}>Closed</span>
+        )}
+        <span className="lib-card-seats tabular">
+          {people.toLocaleString()} <span style={{ color: "var(--paper-2)" }}>/ {capacity.toLocaleString()} seats</span>
+        </span>
+      </div>
+
+      <div className="lib-bar" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label={`${name} occupancy`}>
+        <span style={{ width: `${isOpen ? pct : 0}%`, background: color }} />
+      </div>
+      <p className="lib-card-hours">{hourSummary}</p>
+
+      {floors.length > 0 && (
+        <div className="lib-floors">
+          <button
+            type="button"
+            className="lib-floors-toggle"
+            onClick={() => setFloorsOpen((v) => !v)}
+            aria-expanded={floorsOpen}
+            aria-controls={floorsId}
+          >
+            <span className="eyebrow">By floor · {floors.length}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"
+              style={{ transform: floorsOpen ? "rotate(180deg)" : "none", transition: "transform var(--dur-2) var(--ease-out)" }}>
+              <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+            </svg>
           </button>
 
-          {floorsOpen && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {subLocs.map((loc) => {
-                const lp = Math.round(loc.percentage * 100);
-                const lc = occupancyColor(lp);
+          {/* grid-rows 0fr→1fr animates height without measuring */}
+          <div id={floorsId} className="lib-floors-body" data-open={floorsOpen ? "true" : "false"}>
+            <ul>
+              {floors.map((loc) => {
+                const lp = toPct(loc.percentage);
+                const lc = colorFor(lp, loc.isOpen);
                 return (
-                  <div key={loc.name} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{
-                      fontSize: 11, color: "#b9cacb", flexShrink: 0,
-                      width: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                    }}>
-                      {loc.name}
+                  <li key={loc.name} className="floor-row">
+                    <span className="floor-name" title={loc.name}>{loc.name}</span>
+                    <span className="floor-bar" aria-hidden="true"><span style={{ width: `${loc.isOpen ? lp : 0}%`, background: lc }} /></span>
+                    <span className="floor-pct tabular" style={{ color: loc.isOpen ? lc : "var(--paper-2)" }}>
+                      {loc.isOpen ? `${lp}%` : "—"}
                     </span>
-                    <div style={{
-                      flex: 1, height: 4, borderRadius: 9999,
-                      background: "rgba(30,58,95,0.5)", overflow: "hidden",
-                    }}>
-                      <div style={{
-                        height: "100%", borderRadius: 9999,
-                        width: `${lp}%`, background: lc,
-                        transition: "width 0.65s ease",
-                      }} />
-                    </div>
-                    <span style={{
-                      fontSize: 11, fontWeight: 700, color: lc,
-                      fontFamily: "var(--font-geist-mono), monospace",
-                      flexShrink: 0, width: 34, textAlign: "right",
-                    }}>
-                      {lp}%
-                    </span>
-                  </div>
+                  </li>
                 );
               })}
-            </div>
-          )}
+            </ul>
+          </div>
         </div>
       )}
-    </div>
+    </Reveal>
   );
 }
 
 // ── Skeleton Card ───────────────────────────────────────────────────
 export function SkeletonLibCard() {
   return (
-    <div className="glass-panel rounded-2xl" style={{
-      padding: 24, minHeight: 340,
-      display: "flex", flexDirection: "column", gap: 20,
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-        <div className="animate-shimmer" style={{ height: 14, width: 160, borderRadius: 6 }} />
-        <div className="animate-shimmer" style={{ height: 22, width: 60, borderRadius: 9999 }} />
+    <div className="lib-card" aria-hidden="true" style={{ minHeight: 320 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 28 }}>
+        <span className="animate-shimmer" style={{ height: 16, width: 160, borderRadius: 2 }} />
+        <span className="animate-shimmer" style={{ height: 16, width: 56, borderRadius: 2 }} />
       </div>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-        <div className="animate-shimmer" style={{ width: 128, height: 128, borderRadius: "50%" }} />
-        <div className="animate-shimmer" style={{ height: 11, width: 120, borderRadius: 6 }} />
-      </div>
-      <div className="animate-shimmer" style={{ height: 6, width: "100%", borderRadius: 9999 }} />
-      <div style={{ borderTop: "1px solid rgba(30,58,95,0.35)", paddingTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-        {[1, 2, 3].map((i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div className="animate-shimmer" style={{ height: 10, width: 100, borderRadius: 5, flexShrink: 0 }} />
-            <div className="animate-shimmer" style={{ height: 4, flex: 1, borderRadius: 9999 }} />
-            <div className="animate-shimmer" style={{ height: 10, width: 30, borderRadius: 5, flexShrink: 0 }} />
-          </div>
-        ))}
-      </div>
+      <span className="animate-shimmer" style={{ display: "block", height: 56, width: 120, borderRadius: 2, marginBottom: 16 }} />
+      <span className="animate-shimmer" style={{ display: "block", height: 4, width: "100%", borderRadius: 2, marginBottom: 28 }} />
+      {[1, 2, 3].map((i) => (
+        <span key={i} className="animate-shimmer" style={{ display: "block", height: 10, width: `${90 - i * 12}%`, borderRadius: 2, marginBottom: 12 }} />
+      ))}
     </div>
   );
 }
 
-// ── Favorite mini-card (used in My Libraries section) ───────────────
-function FavoriteMiniCard({
-  lib,
-  onRemove,
-}: {
-  lib: LibProps;
-  onRemove: () => void;
-}) {
-  const pct   = Math.round(lib.percentage * 100);
-  const color = occupancyColor(pct);
-
+// ── Saved libraries ─────────────────────────────────────────────────
+function FavoriteMiniCard({ lib, onRemove }: { lib: LibProps; onRemove: () => void }) {
+  const pct = toPct(lib.percentage);
+  const color = colorFor(pct, lib.isOpen);
   return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 12,
-      padding: "10px 14px", borderRadius: 12,
-      background: "rgba(99,102,241,0.06)",
-      border: "1px solid rgba(99,102,241,0.22)",
-      backdropFilter: "blur(8px)",
-      WebkitBackdropFilter: "blur(8px)",
-    }}>
-      {/* Status dot */}
-      <span style={{
-        width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
-        background: lib.isOpen ? color : "#6B7FA3",
-        boxShadow: lib.isOpen ? `0 0 6px ${color}80` : "none",
-      }} />
-
-      {/* Name */}
-      <span style={{
-        flex: 1, minWidth: 0,
-        fontSize: 13, fontWeight: 600, color: "#e2e2e8",
-        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-        fontFamily: "Sora, sans-serif",
-      }}>
-        {lib.name}
+    <li className="fav-row">
+      <span className="status-dot" style={{ background: color }} aria-hidden="true" />
+      <span className="fav-name">{lib.name}</span>
+      <span className="tabular" style={{ color: lib.isOpen ? color : "var(--paper-2)", fontFamily: "var(--font-mono)", fontSize: 13 }}>
+        {lib.isOpen ? `${pct}%` : "Closed"}
       </span>
-
-      {/* Occupancy or Closed */}
-      {lib.isOpen ? (
-        <span style={{
-          fontSize: 12, fontWeight: 700, color, flexShrink: 0,
-          fontFamily: "var(--font-geist-mono), monospace",
-        }}>
-          {pct}%
-        </span>
-      ) : (
-        <span style={{ fontSize: 11, color: "#6B7FA3", flexShrink: 0 }}>Closed</span>
-      )}
-
-      {/* Remove button */}
-      <button
-        onClick={onRemove}
-        aria-label={`Remove ${lib.name} from saved`}
-        style={{
-          background: "none", border: "none", cursor: "pointer",
-          color: "#6B7FA3", fontSize: 18, lineHeight: 1,
-          padding: "0 2px", flexShrink: 0,
-          display: "flex", alignItems: "center",
-          transition: "color 150ms ease",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#ffb4ab")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7FA3")}
-      >
-        ×
+      <button type="button" className="icon-btn" onClick={onRemove} aria-label={`Remove ${lib.name} from saved`}>
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" /></svg>
       </button>
-    </div>
+    </li>
   );
 }
 
-// ── My Libraries section ─────────────────────────────────────────────
 export function MyLibrariesSection({
   libs,
   favorites,
@@ -612,31 +315,13 @@ export function MyLibrariesSection({
   if (!favLibs.length) return null;
 
   return (
-    <div id="my-libraries" style={{ marginBottom: 28 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-        <span
-          className="material-symbols-outlined"
-          style={{ fontSize: 16, color: "#6366F1", fontVariationSettings: "'FILL' 1" }}
-        >
-          bookmark
-        </span>
-        <h2 style={{
-          margin: 0, fontSize: "0.9rem", fontWeight: 700,
-          color: "#e2e2e8", fontFamily: "Sora, sans-serif",
-        }}>
-          Your saved libraries
-        </h2>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <section id="my-libraries" aria-labelledby="saved-title" style={{ marginBottom: 32, scrollMarginTop: 96 }}>
+      <h2 id="saved-title" className="eyebrow" style={{ margin: "0 0 12px" }}>Your saved libraries</h2>
+      <ul className="fav-list">
         {favLibs.map((lib) => (
-          <FavoriteMiniCard
-            key={lib.name}
-            lib={lib}
-            onRemove={() => removeFavorite(lib.name)}
-          />
+          <FavoriteMiniCard key={lib.name} lib={lib} onRemove={() => removeFavorite(lib.name)} />
         ))}
-      </div>
-      <div style={{ height: 1, background: "rgba(30,58,95,0.4)", marginTop: 24 }} />
-    </div>
+      </ul>
+    </section>
   );
 }

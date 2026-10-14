@@ -185,10 +185,10 @@ export default function BestSpotCard({ libraries }: BestSpotCardProps) {
       className="relative w-full overflow-hidden rounded-2xl px-5 py-5 sm:px-7 sm:py-6"
       style={{
         background:
-          "linear-gradient(135deg, rgba(6,182,212,0.09) 0%, rgba(129,140,248,0.07) 100%)",
-        border: "1px solid rgba(6,182,212,0.22)",
+          "linear-gradient(135deg, rgba(214,166,92,0.09) 0%, rgba(214,166,92,0.07) 100%)",
+        border: "1px solid rgba(214,166,92,0.22)",
         boxShadow:
-          "0 0 40px rgba(6,182,212,0.07), inset 0 1px 0 rgba(255,255,255,0.04)",
+          "0 0 40px rgba(214,166,92,0.07), inset 0 1px 0 rgba(255,255,255,0.04)",
       }}
     >
       <div

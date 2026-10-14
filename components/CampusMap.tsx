@@ -37,11 +37,11 @@ const BUILDING_CATEGORY: Record<string, Category> = {
 const CATEGORY_META: Record<Category, {
   color: string; glowRgb: string; filterKey: FilterKey; badge: string;
 }> = {
-  "library":         { color: "#6366F1", glowRgb: "99,102,241",  filterKey: "libraries", badge: "Library"         },
-  "college-library": { color: "#A855F7", glowRgb: "168,85,247",  filterKey: "libraries", badge: "College Library" },
-  "lab":             { color: "#F59E0B", glowRgb: "245,158,11",  filterKey: "labs",      badge: "Lab"             },
-  "study":           { color: "#34D399", glowRgb: "52,211,153",  filterKey: "study",     badge: "Study Space"     },
-  "cafe":            { color: "#34D399", glowRgb: "52,211,153",  filterKey: "cafes",     badge: "Café"            },
+  "library":         { color: "var(--brass)", glowRgb: "99,102,241",  filterKey: "libraries", badge: "Library"         },
+  "college-library": { color: "var(--brass)", glowRgb: "168,85,247",  filterKey: "libraries", badge: "College Library" },
+  "lab":             { color: "#f2a93b", glowRgb: "245,158,11",  filterKey: "labs",      badge: "Lab"             },
+  "study":           { color: "#6fd3a8", glowRgb: "52,211,153",  filterKey: "study",     badge: "Study Space"     },
+  "cafe":            { color: "#6fd3a8", glowRgb: "52,211,153",  filterKey: "cafes",     badge: "Café"            },
 };
 
 const FILTERS: { key: FilterKey; label: string }[] = [
@@ -64,9 +64,9 @@ function matchesFilter(b: Building, f: FilterKey): boolean {
 // ── Noise / type meta ─────────────────────────────────────────────────────────
 
 const NOISE_META: Record<StudySpace["noiseLevel"], { icon: string; label: string; color: string; rgb: string }> = {
-  silent:        { icon: "🔇", label: "Silent",        color: "#818CF8", rgb: "129,140,248" },
-  quiet:         { icon: "🤫", label: "Quiet",         color: "#34D399", rgb: "52,211,153"  },
-  collaborative: { icon: "💬", label: "Collaborative", color: "#F59E0B", rgb: "245,158,11"  },
+  silent:        { icon: "🔇", label: "Silent",        color: "var(--brass)", rgb: "129,140,248" },
+  quiet:         { icon: "🤫", label: "Quiet",         color: "#6fd3a8", rgb: "52,211,153"  },
+  collaborative: { icon: "💬", label: "Collaborative", color: "#f2a93b", rgb: "245,158,11"  },
 };
 
 const TYPE_META: Record<StudySpace["type"], { icon: string; label: string }> = {
@@ -89,20 +89,20 @@ function SpaceCard({ space }: { space: StudySpace }) {
     <div style={{
       padding: "14px 16px", borderRadius: 14, marginBottom: 10,
       background: "rgba(255,255,255,0.025)",
-      border: "1px solid rgba(30,58,95,0.5)",
+      border: "1px solid var(--line-strong)",
     }}>
-      <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 700, color: "#e2e2e8", lineHeight: 1.3 }}>
+      <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 700, color: "var(--paper-0)", lineHeight: 1.3 }}>
         {space.name}
       </p>
-      <p style={{ margin: "0 0 10px", fontSize: 11, color: "#6B7FA3" }}>{space.floor}</p>
+      <p style={{ margin: "0 0 10px", fontSize: 11, color: "var(--paper-2)" }}>{space.floor}</p>
 
       {/* Type + noise badges */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 8 }}>
         <span style={{
           display: "inline-flex", alignItems: "center", gap: 4,
           fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 6,
-          backgroundColor: "rgba(99,102,241,0.1)", color: "#b9cacb",
-          border: "1px solid rgba(99,102,241,0.2)",
+          backgroundColor: "rgba(214,166,92,0.1)", color: "var(--paper-1)",
+          border: "1px solid rgba(214,166,92,0.2)",
         }}>
           {type.icon} {type.label}
         </span>
@@ -120,17 +120,17 @@ function SpaceCard({ space }: { space: StudySpace }) {
       {(space.keycardRequired || space.outlets || space.printer) && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
           {space.keycardRequired && (
-            <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 5, backgroundColor: "rgba(255,180,171,0.1)", color: "#ffb4ab", border: "1px solid rgba(255,180,171,0.3)" }}>
+            <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 5, backgroundColor: "rgba(242,115,90,0.1)", color: "#f2735a", border: "1px solid rgba(242,115,90,0.3)" }}>
               🔒 Keycard
             </span>
           )}
           {space.outlets && (
-            <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 5, backgroundColor: "rgba(99,102,241,0.08)", color: "#818CF8", border: "1px solid rgba(99,102,241,0.2)" }}>
+            <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 5, backgroundColor: "rgba(214,166,92,0.08)", color: "var(--brass)", border: "1px solid rgba(214,166,92,0.2)" }}>
               🔌 Outlets
             </span>
           )}
           {space.printer && (
-            <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 5, backgroundColor: "rgba(99,102,241,0.08)", color: "#818CF8", border: "1px solid rgba(99,102,241,0.2)" }}>
+            <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 5, backgroundColor: "rgba(214,166,92,0.08)", color: "var(--brass)", border: "1px solid rgba(214,166,92,0.2)" }}>
               🖨️ Printer
             </span>
           )}
@@ -139,7 +139,7 @@ function SpaceCard({ space }: { space: StudySpace }) {
 
       {/* Notes */}
       {space.notes && (
-        <p style={{ margin: "0 0 10px", fontSize: 11, color: "#6B7FA3", lineHeight: 1.55, fontStyle: "italic" }}>
+        <p style={{ margin: "0 0 10px", fontSize: 11, color: "var(--paper-2)", lineHeight: 1.55, fontStyle: "italic" }}>
           {space.notes}
         </p>
       )}
@@ -152,9 +152,9 @@ function SpaceCard({ space }: { space: StudySpace }) {
           rel="noopener noreferrer"
           style={{
             display: "inline-flex", alignItems: "center", gap: 4,
-            fontSize: 12, fontWeight: 700, color: "#818CF8",
+            fontSize: 12, fontWeight: 700, color: "var(--brass)",
             textDecoration: "none", padding: "5px 12px", borderRadius: 8,
-            backgroundColor: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.3)",
+            backgroundColor: "rgba(214,166,92,0.12)", border: "1px solid rgba(214,166,92,0.3)",
           }}
         >
           Book now →
@@ -174,9 +174,7 @@ function Panel({ building, onClose, isMobile }: {
   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${building.coords[0]},${building.coords[1]}`;
 
   const base: React.CSSProperties = {
-    background: "rgba(10,15,28,0.97)",
-    backdropFilter: "blur(24px)",
-    WebkitBackdropFilter: "blur(24px)",
+    background: "var(--ink-1)",
     overflowY: "auto",
   };
 
@@ -213,7 +211,6 @@ function Panel({ building, onClose, isMobile }: {
           style={{
             position: "fixed", inset: 0, zIndex: 999,
             backgroundColor: "rgba(0,0,0,0.55)",
-            backdropFilter: "blur(2px)", WebkitBackdropFilter: "blur(2px)",
           }}
         />
       )}
@@ -222,7 +219,7 @@ function Panel({ building, onClose, isMobile }: {
         {/* Drag handle (mobile) */}
         {isMobile && (
           <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 6px" }}>
-            <div style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: "rgba(30,58,95,0.8)" }} />
+            <div style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: "var(--line-strong)" }} />
           </div>
         )}
 
@@ -242,7 +239,7 @@ function Panel({ building, onClose, isMobile }: {
               </span>
               <h2 style={{
                 margin: 0, fontSize: 17, fontWeight: 800, lineHeight: 1.2,
-                color: "#e2e2e8", letterSpacing: "-0.02em", fontFamily: "Sora, sans-serif",
+                color: "var(--paper-0)", letterSpacing: "-0.02em", fontFamily: "var(--font-sans)",
               }}>
                 {building.name}
               </h2>
@@ -253,8 +250,8 @@ function Panel({ building, onClose, isMobile }: {
               style={{
                 flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
                 width: 32, height: 32, borderRadius: 9,
-                backgroundColor: "rgba(30,58,95,0.5)", border: "1px solid rgba(30,58,95,0.7)",
-                color: "#6B7FA3", cursor: "pointer",
+                backgroundColor: "var(--line-strong)", border: "1px solid var(--line-strong)",
+                color: "var(--paper-2)", cursor: "pointer",
               }}
             >
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" aria-hidden="true">
@@ -264,7 +261,7 @@ function Panel({ building, onClose, isMobile }: {
           </div>
 
           {/* Description */}
-          <p style={{ margin: "0 0 14px", fontSize: 13, color: "#6B7FA3", lineHeight: 1.55 }}>
+          <p style={{ margin: "0 0 14px", fontSize: 13, color: "var(--paper-2)", lineHeight: 1.55 }}>
             {building.description}
           </p>
 
@@ -276,27 +273,27 @@ function Panel({ building, onClose, isMobile }: {
               rel="noopener noreferrer"
               style={{
                 display: "inline-flex", alignItems: "center", gap: 5,
-                fontSize: 12, fontWeight: 700, color: "#e2e2e8",
+                fontSize: 12, fontWeight: 700, color: "var(--paper-0)",
                 textDecoration: "none", padding: "7px 14px", borderRadius: 9,
-                backgroundColor: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.3)",
+                backgroundColor: "rgba(214,166,92,0.12)", border: "1px solid rgba(214,166,92,0.3)",
               }}
             >
               📍 Get directions
             </a>
             <span style={{
               display: "inline-flex", alignItems: "center",
-              fontSize: 12, fontWeight: 600, color: "#6B7FA3",
+              fontSize: 12, fontWeight: 600, color: "var(--paper-2)",
               padding: "7px 14px", borderRadius: 9,
-              backgroundColor: "rgba(30,58,95,0.35)", border: "1px solid rgba(30,58,95,0.55)",
+              backgroundColor: "var(--line)", border: "1px solid var(--line-strong)",
             }}>
               🎓 On campus
             </span>
             {hasKeycard(building) && (
               <span style={{
                 display: "inline-flex", alignItems: "center", gap: 4,
-                fontSize: 12, fontWeight: 600, color: "#ffb4ab",
+                fontSize: 12, fontWeight: 600, color: "#f2735a",
                 padding: "7px 14px", borderRadius: 9,
-                backgroundColor: "rgba(255,180,171,0.08)", border: "1px solid rgba(255,180,171,0.22)",
+                backgroundColor: "rgba(242,115,90,0.08)", border: "1px solid rgba(242,115,90,0.22)",
               }}>
                 🔒 Keycard areas
               </span>
@@ -305,7 +302,7 @@ function Panel({ building, onClose, isMobile }: {
 
           <p style={{
             margin: "0 0 12px", fontSize: 10, fontWeight: 700,
-            textTransform: "uppercase", letterSpacing: "0.16em", color: "#6B7FA3",
+            textTransform: "uppercase", letterSpacing: "0.16em", color: "var(--paper-2)",
           }}>
             Study Spaces · {building.studySpaces.length}
           </p>
@@ -319,18 +316,18 @@ function Panel({ building, onClose, isMobile }: {
         </div>
 
         {/* ── Footer ── */}
-        <div style={{ padding: "14px 20px 28px", borderTop: "1px solid rgba(30,58,95,0.4)" }}>
+        <div style={{ padding: "14px 20px 28px", borderTop: "1px solid var(--line)" }}>
           <a
             href="https://uwaterloo.ca/map/"
             target="_blank"
             rel="noopener noreferrer"
             style={{
               display: "inline-flex", alignItems: "center", gap: 5,
-              fontSize: 12, fontWeight: 600, color: "#6B7FA3", textDecoration: "none",
+              fontSize: 12, fontWeight: 600, color: "var(--paper-2)", textDecoration: "none",
               transition: "color 150ms ease",
             }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = "#818CF8")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = "#6B7FA3")}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = "var(--brass)")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = "var(--paper-2)")}
           >
             View on Campus Map ↗
           </a>
@@ -378,13 +375,13 @@ function BuildingMarker({
             bottom: `calc(100% + ${dotSize / 2 + 8}px)`,
             left: "50%",
             transform: "translateX(-50%)",
-            background: "rgba(10,15,28,0.97)",
+            background: "var(--ink-1)",
             border: `1px solid ${color}55`,
             borderRadius: 9, padding: "5px 11px",
-            fontSize: 11, fontWeight: 600, color: "#e2e2e8",
+            fontSize: 11, fontWeight: 600, color: "var(--paper-0)",
             whiteSpace: "nowrap", pointerEvents: "none",
             boxShadow: `0 4px 20px rgba(0,0,0,0.7), 0 0 12px ${color}22`,
-            zIndex: 20, fontFamily: "Sora, sans-serif",
+            zIndex: 20, fontFamily: "var(--font-sans)",
           }}>
             <span style={{ color, marginRight: 5, fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase" }}>
               {building.shortName}
@@ -430,7 +427,7 @@ function BuildingMarker({
       <span style={{
         fontSize: 8, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase",
         color: hov || isSelected ? color : "rgba(225,225,232,0.65)",
-        fontFamily: "Sora, sans-serif",
+        fontFamily: "var(--font-sans)",
         transition: "color 150ms ease",
         userSelect: "none",
         textShadow: "0 1px 6px rgba(0,0,0,1), 0 1px 12px rgba(0,0,0,0.8)",
@@ -449,9 +446,8 @@ function CategoryFilter({ active, onChange }: { active: FilterKey; onChange: (k:
       position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)",
       zIndex: 500,
       display: "inline-flex", alignItems: "center",
-      background: "rgba(10,15,28,0.92)",
-      backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-      border: "1px solid rgba(30,58,95,0.6)",
+      background: "var(--ink-1)",
+      border: "1px solid var(--line-strong)",
       borderRadius: 9999, padding: "4px 5px", gap: 2,
       boxShadow: "0 4px 28px rgba(0,0,0,0.6)",
     }}>
@@ -465,11 +461,11 @@ function CategoryFilter({ active, onChange }: { active: FilterKey; onChange: (k:
               padding: "6px 14px", borderRadius: 9999,
               fontSize: 12, fontWeight: 600,
               border: "none",
-              background: isActive ? "rgba(99,102,241,0.22)" : "transparent",
-              color: isActive ? "#818CF8" : "#6B7FA3",
+              background: isActive ? "rgba(214,166,92,0.22)" : "transparent",
+              color: isActive ? "var(--brass)" : "var(--paper-2)",
               cursor: "pointer",
               transition: "background 150ms ease, color 150ms ease",
-              fontFamily: "Sora, sans-serif",
+              fontFamily: "var(--font-sans)",
               whiteSpace: "nowrap",
             }}
           >
@@ -487,28 +483,27 @@ function MapLegend() {
   return (
     <div style={{
       position: "absolute", bottom: 28, left: 16, zIndex: 500,
-      background: "rgba(10,15,28,0.92)",
-      backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-      border: "1px solid rgba(30,58,95,0.5)",
+      background: "var(--ink-1)",
+      border: "1px solid var(--line-strong)",
       borderRadius: 12, padding: "12px 16px",
       boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
-      fontFamily: "Sora, sans-serif",
+      fontFamily: "var(--font-sans)",
     }}>
-      <p style={{ margin: "0 0 9px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.14em", color: "#6B7FA3" }}>
+      <p style={{ margin: "0 0 9px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--paper-2)" }}>
         Building Types
       </p>
       {[
-        { color: "#6366F1", glow: "rgba(99,102,241,0.65)",  label: "Libraries"         },
-        { color: "#A855F7", glow: "rgba(168,85,247,0.65)",  label: "College libraries"  },
-        { color: "#34D399", glow: "rgba(52,211,153,0.65)",  label: "Study spaces"       },
-        { color: "#F59E0B", glow: "rgba(245,158,11,0.65)",  label: "Labs"              },
+        { color: "var(--brass)", glow: "rgba(214,166,92,0.65)",  label: "Libraries"         },
+        { color: "var(--brass)", glow: "rgba(168,85,247,0.65)",  label: "College libraries"  },
+        { color: "#6fd3a8", glow: "rgba(111,211,168,0.65)",  label: "Study spaces"       },
+        { color: "#f2a93b", glow: "rgba(242,169,59,0.65)",  label: "Labs"              },
       ].map(({ color, glow, label }) => (
         <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
           <span style={{
             width: 8, height: 8, borderRadius: "50%", flexShrink: 0, display: "inline-block",
             background: color, boxShadow: `0 0 6px ${glow}`,
           }} />
-          <span style={{ fontSize: 12, color: "#b9cacb" }}>{label}</span>
+          <span style={{ fontSize: 12, color: "var(--paper-1)" }}>{label}</span>
         </div>
       ))}
     </div>
@@ -521,16 +516,15 @@ function SpaceCounter({ count }: { count: number }) {
   return (
     <div style={{
       position: "absolute", top: 16, right: 16, zIndex: 500,
-      background: "rgba(10,15,28,0.92)",
-      backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-      border: "1px solid rgba(30,58,95,0.5)",
+      background: "var(--ink-1)",
+      border: "1px solid var(--line-strong)",
       borderRadius: 10, padding: "7px 14px",
-      fontSize: 12, fontWeight: 600, color: "#b9cacb",
-      fontFamily: "Sora, sans-serif",
+      fontSize: 12, fontWeight: 600, color: "var(--paper-1)",
+      fontFamily: "var(--font-sans)",
       boxShadow: "0 4px 16px rgba(0,0,0,0.45)",
       whiteSpace: "nowrap",
     }}>
-      📍 <span style={{ color: "#818CF8", fontWeight: 700 }}>{count}</span> study spaces on campus
+      📍 <span style={{ color: "var(--brass)", fontWeight: 700 }}>{count}</span> study spaces on campus
     </div>
   );
 }
@@ -575,16 +569,16 @@ export default function CampusMap() {
   if (TOKEN_MISSING) {
     return (
       <div style={{
-        width: "100%", height: "100%", background: "#0A0F1C",
+        width: "100%", height: "100%", background: "var(--ink-0)",
         display: "flex", alignItems: "center", justifyContent: "center",
         flexDirection: "column", gap: 12, textAlign: "center", padding: 32,
       }}>
-        <span className="material-symbols-outlined" style={{ fontSize: 48, color: "#6366F1" }}>map</span>
-        <h2 style={{ margin: 0, color: "#e2e2e8", fontFamily: "Sora, sans-serif", fontSize: "1.1rem", fontWeight: 700 }}>
+        <span className="material-symbols-outlined" style={{ fontSize: 48, color: "var(--brass)" }}>map</span>
+        <h2 style={{ margin: 0, color: "var(--paper-0)", fontFamily: "var(--font-sans)", fontSize: "1.1rem", fontWeight: 700 }}>
           Interactive map unavailable
         </h2>
-        <p style={{ margin: 0, color: "#6B7FA3", fontSize: 14, maxWidth: 360, lineHeight: 1.6 }}>
-          Add your Mapbox token in <code style={{ color: "#818CF8" }}>.env.local</code> to enable the interactive map.
+        <p style={{ margin: 0, color: "var(--paper-2)", fontSize: 14, maxWidth: 360, lineHeight: 1.6 }}>
+          Add your Mapbox token in <code style={{ color: "var(--brass)" }}>.env.local</code> to enable the interactive map.
         </p>
       </div>
     );
@@ -598,24 +592,24 @@ export default function CampusMap() {
           100% { transform: scale(2.6); opacity: 0;    }
         }
         @keyframes lc-glow-library {
-          0%, 100% { box-shadow: 0 0 8px rgba(99,102,241,0.7);  }
-          50%       { box-shadow: 0 0 20px rgba(99,102,241,1);   }
+          0%, 100% { box-shadow: 0 0 8px rgba(214,166,92,0.7);  }
+          50%       { box-shadow: 0 0 20px rgba(214,166,92,1);   }
         }
         @keyframes lc-glow-college-library {
           0%, 100% { box-shadow: 0 0 8px rgba(168,85,247,0.7);  }
           50%       { box-shadow: 0 0 20px rgba(168,85,247,1);   }
         }
         @keyframes lc-glow-lab {
-          0%, 100% { box-shadow: 0 0 8px rgba(245,158,11,0.7);  }
-          50%       { box-shadow: 0 0 20px rgba(245,158,11,1);   }
+          0%, 100% { box-shadow: 0 0 8px rgba(242,169,59,0.7);  }
+          50%       { box-shadow: 0 0 20px rgba(242,169,59,1);   }
         }
         @keyframes lc-glow-study {
-          0%, 100% { box-shadow: 0 0 8px rgba(52,211,153,0.7);  }
-          50%       { box-shadow: 0 0 20px rgba(52,211,153,1);   }
+          0%, 100% { box-shadow: 0 0 8px rgba(111,211,168,0.7);  }
+          50%       { box-shadow: 0 0 20px rgba(111,211,168,1);   }
         }
         @keyframes lc-glow-cafe {
-          0%, 100% { box-shadow: 0 0 8px rgba(52,211,153,0.7);  }
-          50%       { box-shadow: 0 0 20px rgba(52,211,153,1);   }
+          0%, 100% { box-shadow: 0 0 8px rgba(111,211,168,0.7);  }
+          50%       { box-shadow: 0 0 20px rgba(111,211,168,1);   }
         }
       `}</style>
 
@@ -665,12 +659,11 @@ export default function CampusMap() {
           position: "absolute", bottom: 28, left: "50%",
           transform: "translateX(-50%)",
           zIndex: 500, pointerEvents: "none",
-          background: "rgba(10,15,28,0.9)",
-          backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-          border: "1px solid rgba(30,58,95,0.4)",
+          background: "var(--ink-1)",
+          border: "1px solid var(--line)",
           borderRadius: 12, padding: "8px 18px",
-          fontSize: 13, fontWeight: 500, color: "#b9cacb",
-          whiteSpace: "nowrap", fontFamily: "Sora, sans-serif",
+          fontSize: 13, fontWeight: 500, color: "var(--paper-1)",
+          whiteSpace: "nowrap", fontFamily: "var(--font-sans)",
         }}>
           Click a marker to explore study spaces
         </div>

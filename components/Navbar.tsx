@@ -1,155 +1,121 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
 
-const NAV_LINKS = [
-  { href: "/waterloo",     label: "Dashboard"   },
-  { href: "/map",          label: "Map"         },
-  { href: "/study-rooms",  label: "Study Rooms" },
-  { href: "/labs",         label: "Labs"        },
+const CAMPUS_LINKS = [
+  { href: "/waterloo", label: "Waterloo" },
+  { href: "/regina",   label: "Regina" },
+  { href: "/uoft",     label: "Toronto" },
 ];
+const TOOL_LINKS = [
+  { href: "/map",         label: "Map" },
+  { href: "/study-rooms", label: "Study rooms" },
+  { href: "/labs",        label: "Labs" },
+];
+const ALL_LINKS = [...CAMPUS_LINKS, ...TOOL_LINKS];
+
+export function Wordmark() {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "baseline", gap: 2 }}>
+      <span style={{ fontFamily: "var(--font-display)", fontSize: 24, lineHeight: 1, letterSpacing: "-0.01em" }}>
+        LibraryCheck
+      </span>
+      {/* the lamp: the one brass mark in the brand */}
+      <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: 999, background: "var(--brass)", transform: "translateY(-14px)" }} />
+    </span>
+  );
+}
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+  const overHero = pathname === "/" && !scrolled && !open;
 
-  const isActive = (href: string) =>
-    pathname === href || (href === "/waterloo" && pathname === "/");
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // close the menu on navigation and on Escape
+  useEffect(() => { setOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <>
-      {/* ── Fixed top bar ─────────────────────────────────────────── */}
       <header
-        className="fixed top-0 left-0 right-0 z-50 h-16 glass-panel flex items-center px-4 sm:px-6 lg:px-8"
-        style={{ borderBottom: "1px solid rgba(59, 73, 75, 0.2)" }}
+        className="nav-bar"
+        data-over-hero={overHero ? "true" : "false"}
       >
-        {/* Logo */}
-        <Link
-          href="/"
-          className="flex-shrink-0 no-underline"
-          style={{ fontFamily: "Sora, sans-serif" }}
-        >
-          <span
-            className="text-xl font-bold tracking-tighter"
-            style={{ color: "#6366F1" }}
-          >
-            LibraryCheck
-          </span>
-        </Link>
+        <div className="container-lc" style={{ height: "100%", display: "flex", alignItems: "center", gap: 24 }}>
+          <Link href="/" aria-label="LibraryCheck home" className="nav-logo">
+            <Wordmark />
+          </Link>
 
-        {/* Desktop center nav */}
-        <nav className="hidden md:flex flex-1 items-center justify-center gap-1">
-          {NAV_LINKS.map(({ href, label }) => {
-            const active = isActive(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className="relative px-4 py-2 text-sm font-medium no-underline transition-colors"
-                style={{
-                  color: active ? "#6366F1" : "#b9cacb",
-                  fontFamily: "Sora, sans-serif",
-                }}
-              >
-                {label}
-                {/* Active accent underline */}
-                {active && (
-                  <span
-                    className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full"
-                    style={{
-                      height: 2,
-                      width: "60%",
-                      background: "linear-gradient(90deg, transparent, #6366F1, transparent)",
-                    }}
-                  />
-                )}
+          <nav aria-label="Primary" className="hidden md:flex" style={{ alignItems: "center", gap: 4, marginLeft: "auto" }}>
+            {CAMPUS_LINKS.map((l) => (
+              <Link key={l.href} href={l.href} className="nav-link" aria-current={isActive(l.href) ? "page" : undefined}>
+                {l.label}
               </Link>
-            );
-          })}
-        </nav>
+            ))}
+            <span aria-hidden="true" style={{ width: 1, height: 16, background: "var(--line-strong)", margin: "0 8px" }} />
+            {TOOL_LINKS.map((l) => (
+              <Link key={l.href} href={l.href} className="nav-link" aria-current={isActive(l.href) ? "page" : undefined}>
+                {l.label}
+              </Link>
+            ))}
+          </nav>
 
-        {/* Right side: theme toggle + mobile hamburger */}
-        <div className="flex items-center gap-2 ml-auto md:ml-0">
-          <ThemeToggle />
-
-          <button
-            onClick={() => setOpen((v) => !v)}
-            aria-label={open ? "Close menu" : "Open menu"}
-            aria-expanded={open}
-            className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg transition-colors"
-            style={{
-              background: "rgba(59, 73, 75, 0.25)",
-              border: "1px solid rgba(59, 73, 75, 0.4)",
-              color: "#b9cacb",
-              cursor: "pointer",
-            }}
-          >
-            {open ? (
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
-                <line x1="14" y1="2" x2="2"  y2="14" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
-              </svg>
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <line x1="2" y1="4"  x2="14" y2="4"  stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" />
-                <line x1="2" y1="8"  x2="14" y2="8"  stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" />
-                <line x1="2" y1="12" x2="14" y2="12" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" />
-              </svg>
-            )}
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }} className="md:ml-2">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              aria-label={open ? "Close menu" : "Open menu"}
+              aria-expanded={open}
+              aria-controls="mobile-menu"
+              className="md:hidden nav-icon-btn"
+            >
+              <span className="burger" data-open={open ? "true" : "false"} aria-hidden="true">
+                <span /><span />
+              </span>
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* ── Mobile slide-down drawer ───────────────────────────────── */}
-      <div
-        className="fixed left-0 right-0 z-40 md:hidden overflow-hidden"
-        style={{
-          top: 64,
-          maxHeight: open ? 220 : 0,
-          opacity: open ? 1 : 0,
-          transition: "max-height 280ms cubic-bezier(0.4,0,0.2,1), opacity 200ms ease",
-          pointerEvents: open ? "auto" : "none",
-          background: "rgba(17, 19, 24, 0.97)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          borderBottom: open ? "1px solid rgba(59, 73, 75, 0.3)" : "none",
-        }}
-      >
-        <nav className="flex flex-col px-4 py-3 gap-1">
-          {NAV_LINKS.map(({ href, label }) => {
-            const active = isActive(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                onClick={() => setOpen(false)}
-                className="flex items-center px-4 py-3 rounded-xl text-sm font-medium no-underline transition-colors"
-                style={{
-                  color: active ? "#6366F1" : "#b9cacb",
-                  background: active ? "rgba(99, 102, 241, 0.08)" : "transparent",
-                  borderLeft: `3px solid ${active ? "#6366F1" : "transparent"}`,
-                  fontFamily: "Sora, sans-serif",
-                }}
-              >
-                {label}
-              </Link>
-            );
-          })}
+      {/* Mobile menu — full-width sheet; links stagger in */}
+      <div id="mobile-menu" className="mobile-menu md:hidden" data-open={open ? "true" : "false"} hidden={!open}>
+        <nav aria-label="Mobile" className="container-lc" style={{ paddingTop: 16, paddingBottom: 32 }}>
+          <p className="eyebrow" style={{ margin: "8px 0 4px" }}>Campuses</p>
+          {CAMPUS_LINKS.map((l, i) => (
+            <Link key={l.href} href={l.href} className="mobile-link" style={{ ["--i" as string]: i }} aria-current={isActive(l.href) ? "page" : undefined}>
+              {l.label}
+            </Link>
+          ))}
+          <p className="eyebrow" style={{ margin: "24px 0 4px" }}>Tools</p>
+          {TOOL_LINKS.map((l, i) => (
+            <Link key={l.href} href={l.href} className="mobile-link" style={{ ["--i" as string]: i + CAMPUS_LINKS.length }} aria-current={isActive(l.href) ? "page" : undefined}>
+              {l.label}
+            </Link>
+          ))}
         </nav>
       </div>
-
-      {/* Scrim — closes drawer on outside tap */}
-      {open && (
-        <div
-          className="fixed inset-0 z-30 md:hidden"
-          style={{ top: 64 }}
-          onClick={() => setOpen(false)}
-          aria-hidden="true"
-        />
-      )}
+      {open && <div className="md:hidden" onClick={() => setOpen(false)} aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 40 }} />}
     </>
   );
 }
+
+export { ALL_LINKS };

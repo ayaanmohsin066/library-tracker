@@ -36,16 +36,17 @@ export default function ReginaPage() {
   const { favorites, toggleFavorite, removeFavorite } = useFavorites();
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-base)" }}>
+    <div>
 
       {/* ── Occupancy Ticker ─────────────────────────────────────── */}
       {hasData && <OccupancyTicker libs={libraries} />}
 
       {/* ── Page content ─────────────────────────────────────────── */}
-      <div style={{ padding: "0 24px 48px", maxWidth: 1400, margin: "0 auto" }}>
+      <div className="container-lc" style={{ paddingBottom: "var(--s-16)" }}>
 
         <LivePageHeader
           title="University of Regina"
+          description="Live occupancy for University of Regina libraries, floor by floor."
           dataUpdatedAt={dataUpdatedAt}
           refetch={refetch}
         />
@@ -72,35 +73,36 @@ export default function ReginaPage() {
 
         {/* Library card grid */}
         {hasData ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {sorted.map((lib) => (
+          <div className="lib-grid">
+            {sorted.map((lib, i) => (
               <LibraryCard
                 key={lib.name}
                 {...lib}
+                index={i}
                 isFavorite={favorites.includes(lib.name)}
                 onToggleFavorite={() => toggleFavorite(lib.name)}
               />
             ))}
           </div>
         ) : isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="lib-grid">
             {[1, 2].map((i) => <SkeletonLibCard key={i} />)}
           </div>
         ) : isError ? (
           <ErrorBanner onRetry={refetch} />
         ) : (
-          <p style={{ fontSize: 14, color: "#6B7FA3" }}>No data available.</p>
+          <p style={{ fontSize: 14, color: "var(--paper-2)" }}>No data available.</p>
         )}
 
         {/* Footer */}
-        <div style={{ marginTop: 48, paddingTop: 20, borderTop: "1px solid rgba(30,58,95,0.35)" }}>
-          <p style={{ fontSize: 12, color: "#6B7FA3" }}>
+        <div className="page-note">
+          <p style={{ margin: 0 }}>
             Data via Waitz · Not affiliated with the University of Regina ·{" "}
             <a
               href="https://www.uregina.ca/library/"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: "#818CF8", textDecoration: "none" }}
+              className="link-u" style={{ color: "var(--paper-1)" }}
             >
               Official library site →
             </a>

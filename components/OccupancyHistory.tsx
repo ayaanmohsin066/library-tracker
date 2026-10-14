@@ -35,8 +35,8 @@ function Sparkline({ data }: { data: HistoryPoint[] }) {
     >
       <defs>
         <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor="#06b6d4" stopOpacity="0.18" />
-          <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
+          <stop offset="0%"   stopColor="var(--brass)" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="var(--brass)" stopOpacity="0" />
         </linearGradient>
       </defs>
       <polygon points={fillPts} fill="url(#spark-fill)" />

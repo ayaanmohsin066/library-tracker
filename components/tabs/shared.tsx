@@ -50,7 +50,7 @@ export function ErrorBanner({ onRetry }: { onRetry: () => void }) {
       className="flex flex-col items-start gap-3 rounded-2xl px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
       style={{
         backgroundColor: "var(--red-dim)",
-        border: "1px solid rgba(239,68,68,0.22)",
+        border: "1px solid rgba(242,115,90,0.22)",
       }}
     >
       <div
@@ -74,8 +74,8 @@ export function ErrorBanner({ onRetry }: { onRetry: () => void }) {
       </div>
       <button
         onClick={onRetry}
-        className="inline-flex min-h-[44px] items-center rounded-xl px-4 py-1.5 text-sm font-semibold text-white transition-opacity duration-150 hover:opacity-85"
-        style={{ backgroundColor: "var(--red)" }}
+        className="inline-flex min-h-[44px] items-center rounded-xl px-4 py-1.5 text-sm font-semibold transition-opacity duration-150 hover:opacity-85"
+        style={{ backgroundColor: "var(--red)", color: "#0b0c0f" }}
       >
         Retry
       </button>
@@ -89,7 +89,7 @@ export function StaleBanner({ onRetry }: { onRetry: () => void }) {
       className="flex flex-col gap-2 rounded-xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
       style={{
         backgroundColor: "var(--amber-dim)",
-        border: "1px solid rgba(245,158,11,0.22)",
+        border: "1px solid rgba(242,169,59,0.22)",
       }}
     >
       <div
@@ -113,8 +113,8 @@ export function StaleBanner({ onRetry }: { onRetry: () => void }) {
       </div>
       <button
         onClick={onRetry}
-        className="inline-flex min-h-[44px] items-center self-start rounded-xl px-4 py-1.5 text-sm font-semibold text-white transition-opacity duration-150 hover:opacity-85 sm:self-auto"
-        style={{ backgroundColor: "var(--amber)" }}
+        className="inline-flex min-h-[44px] items-center self-start rounded-xl px-4 py-1.5 text-sm font-semibold transition-opacity duration-150 hover:opacity-85 sm:self-auto"
+        style={{ backgroundColor: "var(--amber)", color: "#0b0c0f" }}
       >
         Refresh
       </button>
